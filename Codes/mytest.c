@@ -1,8 +1,8 @@
-int x[10];
+int x[10], y;
 int bar(){
-    int a[10], b;
-    a[b] = b;
+    int a;
+    a = x[0];
+    a = y;
 }
-int y;
 int main(){
 }
