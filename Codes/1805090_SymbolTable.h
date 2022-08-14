@@ -96,4 +96,5 @@ public:
         }
         lout<<endl;
     }
+    string getCurrentScope(){return str_replace(currentTable->uniqueId);}
 };

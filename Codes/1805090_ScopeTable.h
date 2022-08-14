@@ -3,6 +3,7 @@
 class ScopeTable{
     int noOfChildren;
     int size;
+    int curVarSize = 0;
     void printList(SymbolInfo* s){
         SymbolInfo* cur = s;
         while(cur != nullptr){
@@ -17,7 +18,7 @@ class ScopeTable{
             cur = cur->next;
         }
     }
-    bool insertTo(int hash, SymbolInfo* s){
+    bool insert(int hash, SymbolInfo* s){
         if(hash_table[hash] == nullptr){
             hash_table[hash] = s;
             // cout<<s->name<<" inserted in: "<<uniqueId<<endl;
@@ -38,6 +39,11 @@ class ScopeTable{
         current->next = s;
         // cout<<"Inserted in ScopeTable# "<<uniqueId<<" at position "<<hash<<", "<<count<<endl;
         return true;
+    }
+    bool insertTo(int hash, SymbolInfo* s){
+        bool rv = insert(hash, s);
+        if(rv) s->setOffset(curVarSize++);
+        return rv;
     }
     bool deleteNode(SymbolInfo *s){
         int hash = hashFun(s->getName());
@@ -142,7 +148,7 @@ public:
             cout<<endl;
         }
     }
-     void print(ofstream &lout){
+    void print(ofstream &lout){
         lout<<endl<<"ScopeTable # "<<uniqueId<<endl;
         for(int i=0; i<size; i++){
             if(hash_table[i] == nullptr) continue;

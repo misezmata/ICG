@@ -16,6 +16,8 @@ vector<pair<string, string> > paramList;
 ofstream errout;
 ofstream logout;
 ofstream asmout;
+stringstream dseg;
+stringstream cseg;
 int errorno = 0;
 
 void yyerror(char *s)
@@ -181,6 +183,10 @@ string getStringFromArgumentList(vector<pair<string*, string*>*> vpss){
 	}
 	return builder;
 }
+int levelCount = 0;
+string getNextLevel(){
+	return "L_"+to_string(levelCount++);
+}
 
 void insertToSymbolTable(string type, vector<SymbolInfo*> v){
 	if(type == "void" || type == "VOID"){
@@ -190,7 +196,24 @@ void insertToSymbolTable(string type, vector<SymbolInfo*> v){
 	for(int i=0; i<sz; i++){
 		v[i]->setVarType(type);
 		if(table->insert(v[i])){
-
+			if(table->getCurrentScope() == "1"){
+				dseg<<"\t"<<v[i]->getName()<<"\tDW\t"<<v[i]->getSize()<<(v[i]->getSize() == 0 ? "" : "\tDUP(0)")<<endl;
+			}
+			else {
+				if(v[i]->getSize() == 0) cseg<<"PUSH 0 ; var declared: "<<v[i]->getName()<<endl;
+				else{
+					string l1 = getNextLevel();
+					string l2 = getNextLevel();
+					cseg<<"; var declared: "<<v[i]->getName()<<"["<<v[i]->getSize()<<"]"<<endl;
+					cseg<<"MOV CX, "<<v[i]->getSize()<<endl;
+					cseg<<"@"<<l1<<":"<<endl;
+					cseg<<"JCXZ @"<<l2<<endl;
+					cseg<<"PUSH 0"<<endl;
+					cseg<<"DEC CX"<<endl;
+					cseg<<"JMP @"<<l1<<endl;
+					cseg<<"@"<<l2<<":"<<endl<<endl;
+				}
+			}
 		}else{
 			errorr(("Multiple declaration of "+v[i]->getName()).c_str());
 		}
@@ -428,6 +451,33 @@ void deleteMe(SymbolInfo* si){
 	if(si != nullptr)delete si;
 }
 
+void initProc(string functionName){
+	cseg<<"PROC "<<functionName<<endl<<endl;
+	if(functionName == "main") return;
+	cseg<<"; preserving sp(in BP), ax, bx, cx, flags"<<endl;
+	cseg<<"PUSH BP"<<endl;
+	cseg<<"MOV BP, SP"<<endl<<endl;
+	cseg<<"PUSH AX"<<endl;
+	cseg<<"PUSH BX"<<endl;
+	cseg<<"PUSH CX"<<endl;
+	cseg<<"PUSHF"<<endl;
+	cseg<<"; function definition here"<<endl<<endl;
+}
+
+void terminateProc(string functionName){
+	if(functionName == "main") {
+		cseg<<functionName<<" ENDP"<<endl<<endl;
+		return;
+	}
+	cseg<<";terminating function"<<endl;
+	cseg<<"POPF"<<endl;
+	cseg<<"POP CX"<<endl;
+	cseg<<"POP BX"<<endl;
+	cseg<<"POP AX"<<endl;
+	cseg<<"POP BP"<<endl<<endl;
+	cseg<<functionName<<" ENDP"<<endl<<endl;
+}
+
 
 %}
 
@@ -525,6 +575,7 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON {
 	;
 
 func_definition : type_specifier ID LPAREN parameter_list RPAREN {
+			initProc(($2->getName()));
 			insertFunctionIdToSymbolTable($2, *$1, true, $4);
 		} compound_statement {
 		print("func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement");
@@ -536,8 +587,10 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 		warning(s.c_str());
 		log((*($$->first) ).c_str());
 		deleteMe($1);
+		terminateProc(($2->getName()));
 	}
 	|  type_specifier ID LPAREN error RPAREN {
+			// initProc(($2->getName()));
 			insertFunctionIdToSymbolTable($2, *$1, true, new vector<SymbolInfo*>);
 		} compound_statement {
 		print("func_definition : type_specifier ID LPAREN error RPAREN compound_statement");
@@ -549,8 +602,10 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 		warning(s.c_str());
 		log((*($$->first) ).c_str());
 		deleteMe($1);
+		terminateProc(($2->getName()));
 	}	
 	| type_specifier ID LPAREN RPAREN {
+			initProc(($2->getName()));
 			insertFunctionIdToSymbolTable($2, *$1, true, new vector<SymbolInfo*>);
 		} compound_statement {
 		// errorr("eikhane ekhane!");
@@ -562,6 +617,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 		// log((*($$->first)).c_str());
 		log((*($$->first) ).c_str());
 		deleteMe($1);
+		terminateProc(($2->getName()));
 		// cout<<*$$<<endl;
 	}
 	;				
@@ -1037,10 +1093,17 @@ int main(int argc,char *argv[])
 	}
 	yyin = fp;
 	yyparse();
+
+	asmout << ".MODEL SMALL"<<endl;
+	asmout << ".STACK 400h"<<endl<<endl;
+	asmout << ".DATA"<<endl;
+	asmout << dseg.str()<<endl;
+	asmout << ".CODE"<<endl;
+	asmout << cseg.str()<<endl;
+	
 	fclose(fp);
 	logout.close();
 	errout.close();
 	delete table;
 	return 0;
 }
-
