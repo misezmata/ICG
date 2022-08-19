@@ -5,72 +5,9 @@
 .DATA
 
 	
-	x		DW		10 DUP(0); line no 1 : x declared
-	y		DW		0; line no 6 : y declared
 		
 .CODE
 		
-
-	bar  PROC
-		
-		PUSH BP
-        MOV BP, SP
-        
-        ; STORING THE GPRS
-        ; DX for returning results
-        PUSH AX
-        PUSH BX
-        PUSH CX
-        PUSHF
-        
-        
-		
-		MOV CX, 10; line no 3 : ; new array of size 10
-		@L_2:
-		JCXZ @L_3
-		PUSH BX
-		DEC CX
-		JMP @L_2
-		@L_3: 
-		PUSH BX ; line no 3 : b declared
-		
-		
-		MOV BX, [ BP-30 ]
-		PUSH BX; line no 4 : b loaded
-		POP BX; line no 4 : ; Array index in BX
-		SHL BX, 1; line no 4 :  ; because 2 byte element
-		NEG BX
-		ADD BX, -10; Array from BP/or data segment
-		ADD BX,BP
-		PUSH [BX]
-		PUSH BX; line no 4 : ; address pushed to stack
-		
-		MOV BX, [ BP-30 ]
-		PUSH BX; line no 4 : b loaded
-		POP AX
-		POP BX
-		POP DX; line no 4 :  ;array value popped
-		MOV [BX], AX; line no 4 : a assined
-		MOV BX, AX
-		PUSH BX
-
-		POP BX; line no 4 : ; previously pushed value on stack is removed
-		
-		; return point bar
-		@L_1: 
-		MOV SP, BP
-		SUB SP, 8
-		POPF  
-        
-        POP CX
-        POP BX
-        POP AX
-        
-        POP BP
-		RET 0
-		
-
-	bar ENDP
 
 	main  PROC
 		
@@ -78,9 +15,41 @@
 		mov DS, AX
 		; data segment loaded
 		
+		PUSH BX ; line no 2 : a declared
+		
+		MOV BX, [ BP-10 ]
+		PUSH BX; line no 3 : a loaded
+		
+		PUSH 10
+		POP AX
+		MOV [BP + -10], AX; line no 3 : a assined
+		MOV BX, AX
+		PUSH BX
+
+		POP BX; line no 3 : ; previously pushed value on stack is removed
+		
+		PUSH BX ; line no 5 : a declared
+		
+		MOV BX, [ BP-12 ]
+		PUSH BX; line no 6 : a loaded
+		
+		PUSH 0
+		POP AX
+		MOV [BP + -12], AX; line no 6 : a assined
+		MOV BX, AX
+		PUSH BX
+
+		POP BX; line no 6 : ; previously pushed value on stack is removed
+		
+		
+		MOV BX, [ BP-10 ]
+		PUSH BX; line no 8 : a loaded
+		POP BX; line no 8 :  return value saved in DX 
+		MOV DX, BX
+		JMP @L_1; line no 8 :  ; exit from the function
 		
 		; return point main
-		@L_4: 
+		@L_1: 
 		mov AH, 4Ch
 		int 21h
 		; returned control to OS

@@ -2,43 +2,49 @@
 .STACK 400h
 
 .DATA
-	x	DW	10	DUP(0)
-	y	DW	0
 
 .CODE
-PROC bar
+main PROC
 
-; preserving sp(in BP), ax, bx, cx, flags
-PUSH BP
-MOV BP, SP
+MOV AX, @DATA
+MOV DS, AX
+; data segment loaded
 
-PUSH AX
-PUSH BX
-PUSH CX
-PUSHF
-; function definition here
+PUSH 0 ; var declared: a offset: 0
+MOV BX, [BP - 10] ; loaded a
+PUSH BX ;stored in stack
+PUSH 10
 
-; var declared: a[10]
-MOV CX, 10
-@L_0:
-JCXZ @L_1
-PUSH 0
-DEC CX
-JMP @L_0
-@L_1:
-
-PUSH 0 ; var declared: b
-;terminating function
-POPF
-POP CX
-POP BX
 POP AX
-POP BP
+MOV [BP + -10], AX
+MOV BX, AX
+PUSH BX
 
-bar ENDP
+POP BX; kijani ekta pop!
 
-PROC main
 
+PUSH 0 ; var declared: a offset: 0
+MOV BX, [BP - 10] ; loaded a
+PUSH BX ;stored in stack
+PUSH 0
+
+POP AX
+MOV [BP + -10], AX
+MOV BX, AX
+PUSH BX
+
+POP BX; kijani ekta pop!
+
+
+MOV BX, [BP - 10] ; loaded a
+PUSH BX ;stored in stack
+POP BX
+MOV DX, BX
+JMP @L_0
+
+@L_0:
+MOV AH, 4CH
+INT 21H
 main ENDP
 
 

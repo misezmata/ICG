@@ -25,10 +25,12 @@ void yyerror(char *s)
 	//write your code
 }
 
-void errorr(const char *s){
+void errorr(const char *s, bool flag = true){
 	errorno++;
 	errout<<"Error at line "<<yylineno<<": "<<s<<"\n"<<endl;
 	logout<<"Error at line "<<yylineno<<": "<<s<<"\n"<<endl;
+	asmout<<";Error at line "<<yylineno<<": "<<s<<"\n"<<endl;
+	if(flag) exit(0);
 	// printf("\033[1;31mError at line: %d:  %s \033[0m\n",yylineno, s);
 }
 
@@ -181,6 +183,9 @@ string getStringFromArgumentList(vector<pair<string*, string*>*> vpss){
 		builder += *(vpss[i]->first);
 		if(i != sz-1) builder += ",";
 	}
+	for(int i=sz-1; i>=0; i--){
+
+	}
 	return builder;
 }
 int levelCount = 0;
@@ -200,11 +205,11 @@ void insertToSymbolTable(string type, vector<SymbolInfo*> v){
 				dseg<<"\t"<<v[i]->getName()<<"\tDW\t"<<v[i]->getSize()<<(v[i]->getSize() == 0 ? "" : "\tDUP(0)")<<endl;
 			}
 			else {
-				if(v[i]->getSize() == 0) cseg<<"PUSH 0 ; var declared: "<<v[i]->getName()<<endl;
+				if(v[i]->getSize() == 0) cseg<<"PUSH 0 ; var declared: "<<v[i]->getName()<<" offset: "<<v[i]->getOffset()<<endl;
 				else{
 					string l1 = getNextLevel();
 					string l2 = getNextLevel();
-					cseg<<"; var declared: "<<v[i]->getName()<<"["<<v[i]->getSize()<<"]"<<endl;
+					cseg<<"; var declared: "<<v[i]->getName()<<"["<<v[i]->getSize()<<"]; offset: "<<v[i]->getOffset()<<endl;
 					cseg<<"MOV CX, "<<v[i]->getSize()<<endl;
 					cseg<<"@"<<l1<<":"<<endl;
 					cseg<<"JCXZ @"<<l2<<endl;
@@ -324,7 +329,11 @@ string checkAndValidateID(string idName, string exp, string expType){
 		return found->getVarType();
 	}
 	if(found->getSize() == 0){
-		if(expType == "NOT_ARRAY") return found->getVarType();
+		if(expType == "NOT_ARRAY") {
+			cseg<<"MOV BX, [BP - "<<(10+found->getOffset()*2)<<"] ; loaded "<<found->getName()<<endl;
+			cseg<<"PUSH BX ;stored in stack"<<endl;
+			return found->getVarType();
+		}
 		errorr((idName+" not an array").c_str());
 		return found->getVarType();
 	}
@@ -339,6 +348,9 @@ string checkAndValidateID(string idName, string exp, string expType){
 	if(expType == "int") {
 		// errorr("inside");
 		// errorr(exp.c_str());
+		// cout<<"EIKHANE ASHE!"<<endl;
+		cseg<<"MOV BX, [BP - "<<(10+found->getOffset()*2)<<"] ; loaded "<<found->getName()<<endl;
+		cseg<<"PUSH BX ;stored in stack"<<endl;
 		return found->getVarType();
 	}
 	int index;
@@ -348,6 +360,13 @@ string checkAndValidateID(string idName, string exp, string expType){
 	// cout<<"\t\t\t: "<<index<<endl;
 	if(index < 0) errorr("Expression inside third brackets cannot be negative");
 	if(index >= found->getSize()) errorr("array index out of bound");
+	cseg<<"POP BX; index loaded"<<endl;
+	cseg<<"SHL BX, 1; index *= 2"<<endl;
+	cseg<<"NEG BX   ; index = -index"<<endl;
+	cseg<<"ADD BX, -"<<(found->getOffset()*2+10)<<endl;
+	cseg<<"ADD BX, BP"<<endl;
+	cseg<<"PUSH [BX]"<<endl;
+	cseg<<"PUSH BX"<<endl;
 	return found->getVarType();
 }
 
@@ -385,16 +404,16 @@ void chekAndValidateFunctionSignature(string a, string b){
 	if(b == "null") b = "void";
 	normalize(a, b);
 	if(a != "void" && b == "void"){
-		errorr("Type mismatch, function is not void");
+		errorr("Type mismatch, function is not void", false);
 		return;
 	} 
 	if(a == "void" && b!= "void"){
-		errorr("Type mismatch, function is void");
+		errorr("Type mismatch, function is void"), false;
 		return;
 	}
 	if(a != b){
 		if(a == "float" && b == "int") return;
-		errorr("Type mismatch, int function is returning float");
+		errorr("Type mismatch, int function is returning float", false);
 	}
 }
 
@@ -452,8 +471,13 @@ void deleteMe(SymbolInfo* si){
 }
 
 void initProc(string functionName){
-	cseg<<"PROC "<<functionName<<endl<<endl;
-	if(functionName == "main") return;
+	cseg<<functionName<<" PROC"<<endl<<endl;
+	if(functionName == "main") {
+		cseg<<"MOV AX, @DATA"<<endl;
+		cseg<<"MOV DS, AX"<<endl;
+		cseg<<"; data segment loaded"<<endl<<endl;
+		return;
+	}
 	cseg<<"; preserving sp(in BP), ax, bx, cx, flags"<<endl;
 	cseg<<"PUSH BP"<<endl;
 	cseg<<"MOV BP, SP"<<endl<<endl;
@@ -464,12 +488,20 @@ void initProc(string functionName){
 	cseg<<"; function definition here"<<endl<<endl;
 }
 
+string functionReturnLabel;
 void terminateProc(string functionName){
 	if(functionName == "main") {
+		cseg<<endl;
+		cseg<<"@"<<functionReturnLabel<<":"<<endl;
+		cseg<<"MOV AH, 4CH"<<endl;
+		cseg<<"INT 21H"<<endl;
 		cseg<<functionName<<" ENDP"<<endl<<endl;
 		return;
 	}
 	cseg<<";terminating function"<<endl;
+	cseg<<"@"<<functionReturnLabel<<":"<<endl;
+	cseg<<"MOV SP, BP"<<endl;
+	cseg<<"SUB SP, 8"<<endl;
 	cseg<<"POPF"<<endl;
 	cseg<<"POP CX"<<endl;
 	cseg<<"POP BX"<<endl;
@@ -477,6 +509,27 @@ void terminateProc(string functionName){
 	cseg<<"POP BP"<<endl<<endl;
 	cseg<<functionName<<" ENDP"<<endl<<endl;
 }
+
+void incDecOp(string s1, string s2, string incOrDec){
+	cout<<s1<<" : "<<s2<<endl;
+	SymbolInfo* si = table->lookUp(s1);
+	if(si != nullptr){
+		cout<<"ID: "<<endl;
+		cseg<<"POP AX"<<endl;
+		cseg<<"PUSH AX"<<endl;
+		cseg<<incOrDec<<"AX"<<endl;
+		cseg<<"MOV [BP + -"<<(si->getOffset()*2+10)<<"], AX"<<endl;
+	}else {
+		cout<<"ARA"<<endl;
+		cseg<<"POP BX"<<endl;
+		cseg<<"POP AX"<<endl;
+		cseg<<"PUSH AX"<<endl;
+		cseg<<incOrDec<<"AX"<<endl;
+		cseg<<"MOV [BX], AX"<<endl;
+	}
+}
+
+
 
 
 %}
@@ -577,6 +630,7 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON {
 func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 			initProc(($2->getName()));
 			insertFunctionIdToSymbolTable($2, *$1, true, $4);
+			functionReturnLabel = getNextLevel();
 		} compound_statement {
 		print("func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement");
 		// insertFunctionIdToSymbolTable($2, *$1, true, $4);
@@ -607,6 +661,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 	| type_specifier ID LPAREN RPAREN {
 			initProc(($2->getName()));
 			insertFunctionIdToSymbolTable($2, *$1, true, new vector<SymbolInfo*>);
+			functionReturnLabel = getNextLevel();
 		} compound_statement {
 		// errorr("eikhane ekhane!");
 		print("func_definition : type_specifier ID LPAREN RPAREN compound_statement");
@@ -856,6 +911,9 @@ statement : var_declaration {
 		print("statement : RETURN expression SEMICOLON");
 		$$ = createPSS("return "+*($2->first)+";\n", *($2->second));
 		log((*($$->first)).c_str());
+		cseg<<"POP BX"<<endl;
+		cseg<<"MOV DX, BX"<<endl;
+		cseg<<"JMP @"<<functionReturnLabel<<endl;
 		deleteMe($2);
 	}
 ;
@@ -869,6 +927,7 @@ expression_statement : SEMICOLON	{
 		print("expression_statement : expression SEMICOLON");
 		$$ = createPSS (*($1->first) + ";", *($1->second));
 		log((*($$->first)).c_str());
+		cseg<<"POP BX; kijani ekta pop!"<<endl<<endl<<endl;
 		deleteMe($1);
 	}
 	| expression error{
@@ -915,6 +974,21 @@ expression : logic_expression {
 		checkAndValidAssign(*($1->second), *($3->second));
 		$$ = createPSS (*($1->first) + "=" + *($3->first), *($1->second));
 		log((*($$->first)).c_str());
+		cseg<<endl;
+		cseg<<"POP AX"<<endl;
+		SymbolInfo *si = table->lookUp(*($1->first));
+		if(si != nullptr){
+			// cseg<<";var a assign!"<<endl;
+			cseg<<"MOV [BP + -"<<(si->getOffset()*2+10)<<"], AX"<<endl;
+		}else{
+			// cseg<<";array te assign!"<<endl;
+			cseg<<"POP BX"<<endl;
+			cseg<<"; POP DX; eita keno korbe janina"<<endl;
+			cseg<<"MOV [BX], AX"<<endl;
+		}
+		cseg<<"MOV BX, AX"<<endl;
+		cseg<<"PUSH BX"<<endl;
+		cseg<<endl;
 		deleteMe($1);deleteMe($3);
 	} 
 	| error ASSIGNOP logic_expression {
@@ -960,6 +1034,17 @@ simple_expression : term {
 		print("simple_expression : simple_expression ADDOP term");
 		$$ = createPSS(*($1->first) + $2->getName() + *($3->first), getHigherType(*($1->second), *($3->second)));
 		log((*($$->first)).c_str());
+		cseg<<endl;
+		cseg<<"POP BX"<<endl;
+		cseg<<"POP AX"<<endl;
+		if($2->getName() == "+"){
+			cseg<<"ADD BX, AX"<<endl;
+		}else {
+			cseg<<"SUB AX, BX"<<endl;
+			cseg<<"MOV BX, AX"<<endl;
+		}
+		cseg<<"PUSH BX"<<endl;
+		cseg<<endl;
 		deleteMe($1);deleteMe($2);deleteMe($3);
 	}
 ;
@@ -1024,24 +1109,31 @@ factor	: variable {
 		print("factor : CONST_INT");
 		$$ = createPSS ($1->getName(),"CONST_INT");
 		log((*($$->first)).c_str());
+		cseg<<"PUSH "<<($1->getName())<<endl;
+
 		deleteMe($1);
 	}
 	| CONST_FLOAT {
 		print("factor : CONST_FLOAT");
 		$$ = createPSS ($1->getName(), "CONST_FLOAT");
 		log((*($$->first)).c_str());
+		cseg<<"PUSH "<<($1->getName())<<endl;
 		deleteMe($1);
 	}
 	| variable INCOP {
 		print("factor : variable INCOP");
 		$$ = createPSS (*($1->first) + "++", *($1->second));
 		log((*($$->first)).c_str());
+
+		incDecOp(*($1->first), *($1->second), "INC ");
+
 		deleteMe($1);
 	}
 	| variable DECOP {
 		print("factor : variable DECOP");
 		$$ = createPSS (*($1->first) + "--", *($1->second));
 		log((*($$->first)).c_str());
+		incDecOp(*($1->first), *($1->second), "DEC ");
 		deleteMe($1);
 	}
 ;

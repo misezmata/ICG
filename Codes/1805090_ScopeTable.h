@@ -42,7 +42,11 @@ class ScopeTable{
     }
     bool insertTo(int hash, SymbolInfo* s){
         bool rv = insert(hash, s);
-        if(rv) s->setOffset(curVarSize++);
+        // cout<<s->getName()<<" "<<s->getSize()<<endl;
+        if(rv) {
+            s->setOffset(curVarSize);
+            curVarSize += s->getSize() == 0 ? 1 : s->getSize();
+        }
         return rv;
     }
     bool deleteNode(SymbolInfo *s){

@@ -23,7 +23,7 @@ int startedAt;
 extern YYSTYPE yylval;
 // extern SymbolTable *table;
 // void yyerror(char *);
-extern void errorr(const char *s);
+extern void errorr(const char *s, bool flag = true);
 
 void insertIntoSymbolTable(string name, string type){
 	// cout<<"type: <"<<type<<">\tname: <"<<name<<">"<<endl;
