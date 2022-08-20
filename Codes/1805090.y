@@ -588,6 +588,7 @@ void checkArray(){
 	}
 	isLastIdArray = false;
 }
+string skipLabel;
 
 //UTILS
 
@@ -977,13 +978,20 @@ statement : var_declaration {
 	}
 ;
 
-new_if_statement : IF LPAREN expression RPAREN statement {
+new_if_statement : IF LPAREN expression {
+		skipLabel = getNextLevel();
+		cseg<<"; if (expr) statement"<<endl;
+		cseg<<"POP BX"<<endl;
+		cseg<<"CMP BX, 0"<<endl;
+		cseg<<"JE @"<<skipLabel<<endl;
+	} RPAREN statement {
 	print("statement : IF LPAREN expression RPAREN statement");
-	string s = "if (" + *($3->first) +")" + *($5->first);
-	$$ = createPSS(s, *($5->second));
+	string s = "if (" + *($3->first) +")" + *($6->first);
+	$$ = createPSS(s, *($6->second));
 	log((*($$->first)).c_str());
+	cseg<<"@"<<skipLabel<<":"<<endl;
 	deleteMe($3);
-	deleteMe($5);
+	deleteMe($6);
 }
 
 expression_statement : SEMICOLON	{

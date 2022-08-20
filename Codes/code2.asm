@@ -1,4 +1,4 @@
-;Error at line 8: Type mismatch, function is not void
+;Error at line 10: Type mismatch, function is not void
 
 .MODEL SMALL
 .STACK 400h
@@ -24,7 +24,11 @@ PUSH BX
 
 POP BX; a=10;
 
-PUSH 1
+PUSH 0
+; if (expr) statement
+POP BX
+CMP BX, 0
+JE @L_1
 MOV BX, [BP - 10] ; loaded a
 PUSH BX ;stored in stack
 PUSH 20
@@ -35,6 +39,18 @@ MOV BX, AX
 PUSH BX
 
 POP BX; a=20;
+
+@L_1:
+MOV BX, [BP - 10] ; loaded a
+PUSH BX ;stored in stack
+PUSH 30
+
+POP AX
+MOV [BP + -10], AX
+MOV BX, AX
+PUSH BX
+
+POP BX; a=30;
 
 MOV BX, [BP - 10]
 PUSH BX

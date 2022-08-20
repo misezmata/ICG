@@ -28,12 +28,12 @@
 
 ; peepholed 27		POP BX; line no 3 : ; previously pushed value on stack is removed
 		
-		; if statement
+		; if else statement
 		
-		PUSH 1
+		PUSH 0
 		POP BX
 		CMP BX, 0
-		JE @L_2 ; go to exit
+		JE @L_2 ; go to else
 		
 		MOV BX, [ BP-10 ]
 		PUSH BX; line no 5 : a loaded
@@ -45,12 +45,26 @@
 ; peepholed 47		PUSH BX
 
 ; peepholed 45		POP BX; line no 5 : ; previously pushed value on stack is removed
-		@L_2:  ; exit label
+		JMP @L_3 ; exit
+		@L_2:  ; else label
 
 		
 		MOV BX, [ BP-10 ]
-; peepholed 53		PUSH BX; line no 7 : a loaded
-; peepholed 52		POP BX
+		PUSH BX; line no 7 : a loaded
+		
+		PUSH 30
+		POP AX
+		MOV [BP + -10], AX; line no 7 : a assined
+		MOV BX, AX
+; peepholed 61		PUSH BX
+
+; peepholed 59		POP BX; line no 7 : ; previously pushed value on stack is removed
+		@L_3: ; if else exit
+
+		
+		MOV BX, [ BP-10 ]
+; peepholed 67		PUSH BX; line no 9 : a loaded
+; peepholed 66		POP BX
 		PUSH BX
 		CALL PRINT_DECIMAL_INTEGER
 		
