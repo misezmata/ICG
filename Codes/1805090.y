@@ -1076,6 +1076,28 @@ logic_expression : rel_expression {
 		checkLogicAndRelExpression(*($1->second), *($3->second));
 		$$ = createPSS (*($1->first) + $2->getName() + *($3->first), "int");
 		log((*($$->first)).c_str());
+		string label1 = getNextLevel();
+		string label2 = getNextLevel();
+		if($2->getName() == "&&"){
+			cseg<<";logical and"<<endl;
+			cseg<<"POP BX"<<endl;
+			cseg<<"CMP BX, 0"<<endl;
+			cseg<<"JE @"<<label1<<endl;
+			cseg<<"POP BX"<<endl;
+			cseg<<"CMP BX, 0"<<endl;
+			cseg<<"JE @"<<label1<<endl;
+			cseg<<"PUSH 1"<<endl;
+			cseg<<"JMP @"<<label2<<endl;
+			cseg<<"@"<<label1<<":"<<endl;
+			cseg<<"PUSH 0"<<endl;
+			cseg<<"@"<<label2<<":"<<endl;
+		}else{
+			cseg<<";logical or"<<endl;
+			cseg<<"POP BX"<<endl;
+			cseg<<"POP AX"<<endl;
+			cseg<<"OR BX, AX"<<endl;
+			cseg<<"PUSH BX"<<endl;
+		}
 		deleteMe($1);deleteMe($2);deleteMe($3);
 	} 	
 ;

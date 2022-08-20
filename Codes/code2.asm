@@ -1,4 +1,4 @@
-;Error at line 5: Type mismatch, function is not void
+;Error at line 8: Type mismatch, function is not void
 
 .MODEL SMALL
 .STACK 400h
@@ -13,14 +13,32 @@ MOV DS, AX
 ; data segment loaded
 
 PUSH 0 ; var declared: a offset: 0
-PUSH 1
-PUSH 2
-POP BX; 1&&2;
+MOV BX, [BP - 10] ; loaded a
+PUSH BX ;stored in stack
+PUSH 10
+
+POP AX
+MOV [BP + -10], AX
+MOV BX, AX
+PUSH BX
+
+POP BX; a=10;
 
 PUSH 1
-PUSH 2
-POP BX; 1||2;
+MOV BX, [BP - 10] ; loaded a
+PUSH BX ;stored in stack
+PUSH 20
 
+POP AX
+MOV [BP + -10], AX
+MOV BX, AX
+PUSH BX
+
+POP BX; a=20;
+
+MOV BX, [BP - 10]
+PUSH BX
+CALL PRINT_DECIMAL_INTEGER
 
 @L_0:
 MOV AH, 4CH

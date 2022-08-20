@@ -17,35 +17,42 @@
 		
 		PUSH BX ; line no 2 : a declared
 		
-		PUSH 1
+		MOV BX, [ BP-10 ]
+		PUSH BX; line no 3 : a loaded
 		
-		PUSH 2
-		
+		PUSH 10
+		POP AX
+		MOV [BP + -10], AX; line no 3 : a assined
+		MOV BX, AX
+		PUSH BX
 
-		POP BX
-		CMP BX, 0
-		JE @L_2; line no 3 :  ; not true
-		POP BX
-		CMP BX, 0
-		JE @L_2; line no 3 :  ; not true
-		PUSH 1; line no 3 : ; conditioin is true
-		JMP @L_3
-		@L_2: 
-		PUSH 0
-		@L_3: ; line no 3 :  ; exiting and operation
 		POP BX; line no 3 : ; previously pushed value on stack is removed
 		
+		; if statement
+		
 		PUSH 1
-		
-		PUSH 2
-		
-
-		; OR OPERATION
 		POP BX
+		CMP BX, 0
+		JE @L_2 ; go to exit
+		
+		MOV BX, [ BP-10 ]
+		PUSH BX; line no 5 : a loaded
+		
+		PUSH 20
 		POP AX
-		OR BX, AX
+		MOV [BP + -10], AX; line no 5 : a assined
+		MOV BX, AX
 		PUSH BX
-		POP BX; line no 4 : ; previously pushed value on stack is removed
+
+		POP BX; line no 5 : ; previously pushed value on stack is removed
+		@L_2:  ; exit label
+
+		
+		MOV BX, [ BP-10 ]
+		PUSH BX; line no 7 : a loaded
+		POP BX
+		PUSH BX
+		CALL PRINT_DECIMAL_INTEGER
 		
 		; return point main
 		@L_1: 
