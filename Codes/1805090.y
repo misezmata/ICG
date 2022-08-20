@@ -18,7 +18,11 @@ ofstream logout;
 ofstream asmout;
 stringstream dseg;
 stringstream cseg;
+stringstream pseg;
 int errorno = 0;
+
+int funcOffset = 0;
+int isLastIdArray = false;
 
 void yyerror(char *s)
 {
@@ -65,7 +69,7 @@ void addParamsToScopeTable(){
 		si->setSpec(1);
 		si->setSize(0);
 		if(table->insert(si)){
-			
+			si->setOffset(funcOffset++);
 		}else{
 			// errorr(("Multiple declaration of "+si->getName()+" in parameter").c_str());
 		}
@@ -219,6 +223,8 @@ void insertToSymbolTable(string type, vector<SymbolInfo*> v){
 					cseg<<"@"<<l2<<":"<<endl<<endl;
 				}
 			}
+			v[i]->setOffset(funcOffset);
+			funcOffset+=max(1, v[i]->getSize());
 		}else{
 			errorr(("Multiple declaration of "+v[i]->getName()).c_str());
 		}
@@ -324,14 +330,18 @@ string checkAndValidateID(string idName, string exp, string expType){
 		errorr(("Undeclared variable "+idName).c_str());
 		return "VOID";
 	}
+	string scope = found->getScope();
 	if(found->getSpec() == 2){
 		errorr("NOT A VARIABLE!");
 		return found->getVarType();
 	}
 	if(found->getSize() == 0){
 		if(expType == "NOT_ARRAY") {
-			cseg<<"MOV BX, [BP - "<<(10+found->getOffset()*2)<<"] ; loaded "<<found->getName()<<endl;
+			cout<<"NOT ARRAY"<<endl;
+			if(scope != "1") cseg<<"MOV BX, [BP - "<<(10+found->getOffset()*2)<<"] ; loaded "<<found->getName()<<endl;
+			else cseg<<"MOV BX, ["<<found->getName()<<"] ; loaded "<<found->getName()<<endl; 
 			cseg<<"PUSH BX ;stored in stack"<<endl;
+			isLastIdArray = false;
 			return found->getVarType();
 		}
 		errorr((idName+" not an array").c_str());
@@ -346,26 +356,27 @@ string checkAndValidateID(string idName, string exp, string expType){
 		return found->getVarType();
 	}
 	if(expType == "int") {
-		// errorr("inside");
-		// errorr(exp.c_str());
-		// cout<<"EIKHANE ASHE!"<<endl;
+		cout<<"int"<<endl;
 		cseg<<"MOV BX, [BP - "<<(10+found->getOffset()*2)<<"] ; loaded "<<found->getName()<<endl;
 		cseg<<"PUSH BX ;stored in stack"<<endl;
 		return found->getVarType();
 	}
 	int index;
-	// errorr("LINE_249");
-	// errorr(exp.c_str());
 	sscanf(exp.c_str(), "%d", &index);
-	// cout<<"\t\t\t: "<<index<<endl;
 	if(index < 0) errorr("Expression inside third brackets cannot be negative");
 	if(index >= found->getSize()) errorr("array index out of bound");
+	cout<<"Baire"<<endl;
 	cseg<<"POP BX; index loaded"<<endl;
 	cseg<<"SHL BX, 1; index *= 2"<<endl;
-	cseg<<"NEG BX   ; index = -index"<<endl;
-	cseg<<"ADD BX, -"<<(found->getOffset()*2+10)<<endl;
-	cseg<<"ADD BX, BP"<<endl;
-	cseg<<"PUSH [BX]"<<endl;
+	if(scope != "1"){
+		cseg<<"NEG BX   ; index = -index"<<endl;
+		cseg<<"ADD BX, -"<<(found->getOffset()*2+10)<<endl;
+		cseg<<"ADD BX, BP"<<endl;
+		cseg<<"PUSH [BX]"<<endl;
+	}else {
+		cseg<<"PUSH "<<found->getName()<<"[BX]"<<endl;
+	}
+	isLastIdArray = true;
 	cseg<<"PUSH BX"<<endl;
 	return found->getVarType();
 }
@@ -471,6 +482,7 @@ void deleteMe(SymbolInfo* si){
 }
 
 void initProc(string functionName){
+	funcOffset = 0;
 	cseg<<functionName<<" PROC"<<endl<<endl;
 	if(functionName == "main") {
 		cseg<<"MOV AX, @DATA"<<endl;
@@ -514,13 +526,13 @@ void incDecOp(string s1, string s2, string incOrDec){
 	cout<<s1<<" : "<<s2<<endl;
 	SymbolInfo* si = table->lookUp(s1);
 	if(si != nullptr){
-		cout<<"ID: "<<endl;
+		// cout<<"ID: "<<endl;
 		cseg<<"POP AX"<<endl;
 		cseg<<"PUSH AX"<<endl;
 		cseg<<incOrDec<<"AX"<<endl;
 		cseg<<"MOV [BP + -"<<(si->getOffset()*2+10)<<"], AX"<<endl;
 	}else {
-		cout<<"ARA"<<endl;
+		// cout<<"ARA"<<endl;
 		cseg<<"POP BX"<<endl;
 		cseg<<"POP AX"<<endl;
 		cseg<<"PUSH AX"<<endl;
@@ -529,6 +541,55 @@ void incDecOp(string s1, string s2, string incOrDec){
 	}
 }
 
+void addPreDefinedFunctions(){
+	ifstream funcs("1805090_util.asm");
+	for(string line; getline(funcs, line);){
+        pseg<<line<<endl;
+    }
+}
+
+void multiply(){
+	cseg<<"; MULTIPLICATION STARTS"<<endl;
+	cseg<<"POP BX"<<endl;
+	cseg<<"MOV CX, BX"<<endl;
+	cseg<<"POP AX"<<endl;
+	cseg<<"IMUL CX"<<endl;
+	cseg<<"MOV BX, AX"<<endl;
+	cseg<<"PUSH BX"<<endl;
+	cseg<<"; MULTIPLICATION ENDS"<<endl;
+}
+
+void divide(){
+	cseg<<"; DIVISION STARTS"<<endl;
+	cseg<<"POP BX"<<endl;
+	cseg<<"MOV CX, BX"<<endl;
+	cseg<<"XOR DX, DX"<<endl;
+	cseg<<"POP AX"<<endl;
+	cseg<<"IDIV CX"<<endl;
+	cseg<<"MOV BX, AX"<<endl;
+	cseg<<"PUSH BX"<<endl;
+	cseg<<"; DIVISION ENDS"<<endl;
+}
+
+void mod(){
+	cseg<<"; MOD STARTS"<<endl;
+	cseg<<"POP BX"<<endl;
+	cseg<<"MOV CX, BX"<<endl;
+	cseg<<"XOR DX, DX"<<endl;
+	cseg<<"POP AX"<<endl;
+	cseg<<"IDIV CX"<<endl;
+	cseg<<"MOV BX, DX"<<endl;
+	cseg<<"PUSH BX"<<endl;
+	cseg<<"; MOD ENDS"<<endl;
+}
+void checkArray(){
+	if(isLastIdArray){
+		cseg<<"POP BX; eita kokhon kora lagbe janina!"<<endl;
+	}
+	isLastIdArray = false;
+}
+
+//UTILS
 
 
 
@@ -899,12 +960,16 @@ statement : var_declaration {
 	}
 	| PRINTLN LPAREN ID RPAREN SEMICOLON {
 		print("statement : PRINTLN LPAREN ID RPAREN SEMICOLON");
-		if(table->lookUp($3->getName()) == nullptr){
+		SymbolInfo *si = table->lookUp($3->getName());
+		if(si == nullptr){
 			string s = "Undeclared variable "+$3->getName();
 			errorr(s.c_str());
 		}
 		$$ = createPSS("printf("+$3->getName()+");\n", "null");
 		log((*($$->first)).c_str());
+		cseg<<"MOV BX, [BP - "<<(si->getOffset()*2+10)<<"]"<<endl;
+		cseg<<"PUSH BX"<<endl;
+		cseg<<"CALL PRINT_DECIMAL_INTEGER"<<endl;
 		deleteMe($3);
 	}
 	| RETURN expression SEMICOLON {
@@ -927,7 +992,8 @@ expression_statement : SEMICOLON	{
 		print("expression_statement : expression SEMICOLON");
 		$$ = createPSS (*($1->first) + ";", *($1->second));
 		log((*($$->first)).c_str());
-		cseg<<"POP BX; kijani ekta pop!"<<endl<<endl<<endl;
+		cseg<<"POP BX; ";
+		cseg<<(*($$->first)).c_str()<<endl<<endl;
 		deleteMe($1);
 	}
 	| expression error{
@@ -967,12 +1033,15 @@ expression : logic_expression {
 		$$ = createPSS(*($1->first) , *($1->second));
 		log((*($$->first)).c_str());
 	}
-	| variable ASSIGNOP logic_expression {
+	| variable ASSIGNOP {
+		//assignRight = true;
+		}
+		logic_expression {
 		// cout<<"\t\t\t\teikhane keno ashe?"<<endl;
 		//TODO eikhane onek kahini kora lagbe 
 		print("expression : variable ASSIGNOP logic_expression");
-		checkAndValidAssign(*($1->second), *($3->second));
-		$$ = createPSS (*($1->first) + "=" + *($3->first), *($1->second));
+		checkAndValidAssign(*($1->second), *($4->second));
+		$$ = createPSS (*($1->first) + "=" + *($4->first), *($1->second));
 		log((*($$->first)).c_str());
 		cseg<<endl;
 		cseg<<"POP AX"<<endl;
@@ -983,13 +1052,13 @@ expression : logic_expression {
 		}else{
 			// cseg<<";array te assign!"<<endl;
 			cseg<<"POP BX"<<endl;
-			cseg<<"; POP DX; eita keno korbe janina"<<endl;
+			cseg<<"POP DX; eita keno korbe janina"<<endl;
 			cseg<<"MOV [BX], AX"<<endl;
 		}
 		cseg<<"MOV BX, AX"<<endl;
 		cseg<<"PUSH BX"<<endl;
 		cseg<<endl;
-		deleteMe($1);deleteMe($3);
+		deleteMe($1);deleteMe($4);
 	} 
 	| error ASSIGNOP logic_expression {
 		errorr("Syntax error");
@@ -1021,6 +1090,23 @@ rel_expression	: simple_expression {
 		checkLogicAndRelExpression(*($1->second), *($3->second));
 		$$ = createPSS (*($1->first) + $2->getName() + *($3->first), "int");
 		log((*($$->first)).c_str());
+		string nextLabel = getNextLevel();
+		string op = $2->getName();
+		
+		cseg<<"POP BX"<<endl;
+		cseg<<"POP AX"<<endl;
+		cseg<<"CMP AX, BX"<<endl;
+		cseg<<"MOV BX, 1"<<endl;
+		if(op == "<") cseg<<"JL";
+		if(op == ">") cseg<<"JG";
+		if(op == "==") cseg<<"JE";
+		if(op == "!=") cseg<<"JNE";
+		if(op == ">=") cseg<<"JGE";
+		if(op == "<=") cseg<<"JLE";
+		cseg<<" @"<<nextLabel<<endl;
+		cseg<<"MOV BX, 0"<<endl;
+		cseg<<"@"<<nextLabel<<": "<<endl;
+		cseg<<"PUSH BX"<<endl<<endl;
 		deleteMe($1);deleteMe($3);
 	}
 ;
@@ -1035,6 +1121,7 @@ simple_expression : term {
 		$$ = createPSS(*($1->first) + $2->getName() + *($3->first), getHigherType(*($1->second), *($3->second)));
 		log((*($$->first)).c_str());
 		cseg<<endl;
+		
 		cseg<<"POP BX"<<endl;
 		cseg<<"POP AX"<<endl;
 		if($2->getName() == "+"){
@@ -1060,6 +1147,10 @@ term :	unary_expression {
 		string type = $2->getName() == "%" ? "int" : getHigherType(*($1->second), *($3->second));
 		$$ = createPSS(*($1->first) + $2->getName() + *($3->first), type);
 		log((*($$->first)).c_str());
+		
+		if($2->getName() == "*") multiply();
+		else if($2->getName() == "/") divide();
+		else if($2->getName() == "%") mod();
 		deleteMe($1);deleteMe($2);deleteMe($3);
 	}
 ;
@@ -1068,6 +1159,12 @@ unary_expression : ADDOP unary_expression {
 		print("unary_expression : ADDOP unary_expression");
 		$$ = createPSS ($1->getName() + "" +(*($2->first)), *($2->second));
 		log((*($$->first)).c_str());
+		cseg<<endl;
+		
+		cseg<<"POP BX"<<endl;
+		cseg<<"NEG BX"<<endl;
+		cseg<<"PUSH BX"<<endl;
+		cseg<<endl;
 		deleteMe($1);
 		deleteMe($2);
 	}
@@ -1076,6 +1173,16 @@ unary_expression : ADDOP unary_expression {
 		$$ = createPSS ("!"+(*($2->first)),"int");
 		// log((*($$->first)).c_str());
 		log((*($$->first)).c_str());
+		string nextLabel = getNextLevel();
+		cseg<<endl;
+		
+		cseg<<"POP BX"<<endl;
+		cseg<<"CMP BX, 0"<<endl;
+		cseg<<"MOV BX, 0"<<endl;
+		cseg<<"JNE @"<<nextLabel<<endl;
+		cseg<<"INC BX"<<endl;
+		cseg<<"@"<<nextLabel<<":"<<endl;
+		cseg<<"PUSH BX"<<endl;
 		deleteMe($2);
 	}
 	| factor {
@@ -1089,6 +1196,8 @@ factor	: variable {
 		print("factor : variable");
 		$$ = $1;
 		log((*($$->first)).c_str());
+		checkArray();
+		// cout<<"assignOP: "<<assignRight<<endl;
 	}
 	| ID LPAREN argument_list RPAREN { //TODO TODO
 		print("factor : ID LPAREN argument_list RPAREN");
@@ -1192,6 +1301,10 @@ int main(int argc,char *argv[])
 	asmout << dseg.str()<<endl;
 	asmout << ".CODE"<<endl;
 	asmout << cseg.str()<<endl;
+	addPreDefinedFunctions();
+	asmout <<";Predefined Procedures"<<endl;
+	asmout << pseg.str()<<endl;
+	asmout << "END MAIN"<<endl;
 	
 	fclose(fp);
 	logout.close();

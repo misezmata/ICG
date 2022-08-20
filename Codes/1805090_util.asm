@@ -1,34 +1,3 @@
-;Error at line 5: Type mismatch, function is not void
-
-.MODEL SMALL
-.STACK 400h
-
-.DATA
-
-.CODE
-main PROC
-
-MOV AX, @DATA
-MOV DS, AX
-; data segment loaded
-
-PUSH 0 ; var declared: a offset: 0
-PUSH 1
-PUSH 2
-POP BX; 1&&2;
-
-PUSH 1
-PUSH 2
-POP BX; 1||2;
-
-
-@L_0:
-MOV AH, 4CH
-INT 21H
-main ENDP
-
-
-;Predefined Procedures
 PRINT_NEWLINE PROC
     ; PRINTS A NEW LINE WITH CARRIAGE RETURN
     PUSH AX
@@ -161,5 +130,3 @@ PRINT_DECIMAL_INTEGER PROC NEAR
 
 
 PRINT_DECIMAL_INTEGER ENDP
-
-END MAIN

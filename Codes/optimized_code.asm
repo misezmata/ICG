@@ -17,36 +17,35 @@
 		
 		PUSH BX ; line no 2 : a declared
 		
-		MOV BX, [ BP-10 ]
-		PUSH BX; line no 3 : a loaded
+		PUSH 1
 		
-		PUSH 10
-		POP AX
-		MOV [BP + -10], AX; line no 3 : a assined
-		MOV BX, AX
-; peepholed 29		PUSH BX
+		PUSH 2
+		
 
-; peepholed 27		POP BX; line no 3 : ; previously pushed value on stack is removed
-		
-		PUSH BX ; line no 5 : a declared
-		
-		MOV BX, [ BP-12 ]
-		PUSH BX; line no 6 : a loaded
-		
+		POP BX
+		CMP BX, 0
+		JE @L_2; line no 3 :  ; not true
+		POP BX
+		CMP BX, 0
+		JE @L_2; line no 3 :  ; not true
+		PUSH 1; line no 3 : ; conditioin is true
+		JMP @L_3
+		@L_2: 
 		PUSH 0
-		POP AX
-		MOV [BP + -12], AX; line no 6 : a assined
-		MOV BX, AX
-; peepholed 42		PUSH BX
+		@L_3: ; line no 3 :  ; exiting and operation
+		POP BX; line no 3 : ; previously pushed value on stack is removed
+		
+		PUSH 1
+		
+		PUSH 2
+		
 
-; peepholed 40		POP BX; line no 6 : ; previously pushed value on stack is removed
-		
-		
-		MOV BX, [ BP-10 ]
-; peepholed 47		PUSH BX; line no 8 : a loaded
-; peepholed 46		POP BX; line no 8 :  return value saved in DX 
-		MOV DX, BX
-		JMP @L_1; line no 8 :  ; exit from the function
+		; OR OPERATION
+		POP BX
+		POP AX
+		OR BX, AX
+; peepholed 48		PUSH BX
+; peepholed 47		POP BX; line no 4 : ; previously pushed value on stack is removed
 		
 		; return point main
 		@L_1: 

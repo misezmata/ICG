@@ -143,6 +143,7 @@ NEWLINE \n
 "default" {return DEFAULT;}
 "continue" {return CONTINUE;}
 "printf" {return PRINTLN;}
+"println" {return PRINTLN;}
 
 {DIGIT}+ {
 	SymbolInfo* si = new SymbolInfo(yytext, "CONST_INT");

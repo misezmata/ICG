@@ -6,6 +6,7 @@ class SymbolInfo{
     int size; // if id, array or not! size of parameterlist
     vector<SymbolInfo*>* params;
     int offset = 0;
+    string scope;
 public:
     SymbolInfo* next;
     SymbolInfo(string name, string type){
@@ -63,4 +64,6 @@ public:
     void setVarType(string vt){this->varType = vt;}
     void setOffset(int i){offset = i;}
     int getOffset(){return offset;}
+    void setScope(string s){scope = s;}
+    string getScope(){return scope;}
 };
