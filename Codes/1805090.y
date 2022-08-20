@@ -607,7 +607,7 @@ void checkArray(){
 %type <sstring> type_specifier var_declaration func_declaration
 %type <pss> expression_statement factor variable expression logic_expression rel_expression simple_expression term unary_expression
 %type <vss> arguments argument_list
-%type <pss> statement compound_statement statements func_definition unit program start
+%type <pss> statement new_if_statement compound_statement statements func_definition unit program start
 // %left 
 // %right
 
@@ -925,19 +925,14 @@ statement : var_declaration {
 		deleteMe($5);
 		deleteMe($7);
 	}
-	| IF LPAREN expression RPAREN statement %prec LOWER_THAN_ELSE {
-		print("statement : IF LPAREN expression RPAREN statement");
-		string s = "if (" + *($3->first) +")" + *($5->first);
-		$$ = createPSS(s, *($5->second));
-		log((*($$->first)).c_str());
-		deleteMe($3);
-		deleteMe($5);
+	| new_if_statement %prec LOWER_THAN_ELSE {
+		$$ = $1;
 	}
-	| IF LPAREN expression RPAREN statement ELSE statement {
+	| new_if_statement ELSE statement {
 		print("statement : IF LPAREN expression RPAREN statement ELSE statement");
-		string s = "if ("+*($3->first)+")"+*($5->first) + "else\n"+ *($7->first) ;
-		string t1 = *($5->second);
-		string t2 = *($7->second);
+		string s = *($1->first) + "else\n"+ *($3->first);
+		string t1 = *($1->second);
+		string t2 = *($3->second);
 		normalize(t1, t2);
 		string type = t1;
 		if(t1 != t2){
@@ -947,9 +942,8 @@ statement : var_declaration {
 		}
 		$$ = createPSS(s, type);
 		log((*($$->first)).c_str());
+		deleteMe($1);
 		deleteMe($3);
-		deleteMe($5);
-		deleteMe($7);
 	}
 	| WHILE LPAREN expression RPAREN statement {
 		print("statement : WHILE LPAREN expression RPAREN statement");
@@ -982,6 +976,15 @@ statement : var_declaration {
 		deleteMe($2);
 	}
 ;
+
+new_if_statement : IF LPAREN expression RPAREN statement {
+	print("statement : IF LPAREN expression RPAREN statement");
+	string s = "if (" + *($3->first) +")" + *($5->first);
+	$$ = createPSS(s, *($5->second));
+	log((*($$->first)).c_str());
+	deleteMe($3);
+	deleteMe($5);
+}
 
 expression_statement : SEMICOLON	{
 		print("expression_statement : SEMICOLON");
