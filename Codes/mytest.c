@@ -1,5 +1,9 @@
-int x, ara[10];
+void foo(int a){
+    a = a + 3;
+    printf(a);
+}
 int main(){
     int a;
-    a = x;
+    a = 10;
+    foo(a);
 }

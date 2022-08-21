@@ -347,8 +347,8 @@ string checkAndValidateID(string idName, string exp, string expType){
 	}
 	if(found->getSize() == 0){
 		if(expType == "NOT_ARRAY") {
-			cout<<"NOT ARRAY"<<endl;
-			if(scope != "1") cseg<<"MOV BX, [BP - "<<(10+found->getOffset()*2)<<"] ; loaded "<<found->getName()<<endl;
+			// cseg<<";NOT ARRAY"<<endl;
+			if(found->getScope() != "1") cseg<<"MOV BX, [BP - "<<(10+found->getOffset()*2)<<"] ; loaded "<<found->getName()<<endl;
 			else cseg<<"MOV BX, ["<<found->getName()<<"] ; loaded "<<found->getName()<<endl; 
 			cseg<<"PUSH BX ;stored in stack"<<endl;
 			isLastIdArray = false;
@@ -546,14 +546,18 @@ void terminateProc(string functionName, int retValue=0){
 void incDecOp(string s1, string s2, string incOrDec){
 	cout<<s1<<" : "<<s2<<endl;
 	SymbolInfo* si = table->lookUp(s1);
+	cseg<<";"<<s1<<endl;
 	if(si != nullptr){
 		// cout<<"ID: "<<endl;
 		cseg<<"POP AX"<<endl;
 		cseg<<"PUSH AX"<<endl;
 		cseg<<incOrDec<<"AX"<<endl;
-		cseg<<"MOV [BP + -"<<(si->getOffset()*2+10)<<"], AX"<<endl;
+		if(si->getParam())cseg<<"MOV [BP + "<<(4+(si->getParamSize()-si->getParam())*2)<<"], AX"<<endl;
+		else if(si->getScope() != "1")cseg<<"MOV [BP + -"<<(si->getOffset()*2+10)<<"], AX"<<endl;
+		else cseg<<"MOV ["<<si->getName()<<"], AX"<<endl;
 	}else {
 		// cout<<"ARA"<<endl;
+		cseg<<";eize ekhane"<<endl;
 		cseg<<"POP BX"<<endl;
 		cseg<<"POP AX"<<endl;
 		cseg<<"PUSH AX"<<endl;
@@ -1094,7 +1098,9 @@ statement : var_declaration {
 		$$ = createPSS("printf("+$3->getName()+");\n", "null");
 		log((*($$->first)).c_str());
 		if(!si->getParam()){
-			cseg<<"MOV BX, [BP - "<<(si->getOffset()*2+10)<<"]"<<endl;
+			// cseg<<";ekhane!"<<endl;
+			if(si->getScope() != "1")cseg<<"MOV BX, [BP - "<<(si->getOffset()*2+10)<<"]"<<endl;
+			else cseg<<"MOV BX, ["<<si->getName()<<"]"<<endl;
 		}else {
 			cseg<<"MOV BX, [BP + "<<(4+(si->getParamSize()-si->getParam())*2)<<"]"<<endl;
 		}
@@ -1176,10 +1182,21 @@ expression : logic_expression {
 		log((*($$->first)).c_str());
 		cseg<<endl;
 		cseg<<"POP AX"<<endl;
-		SymbolInfo *si = table->lookUp(*($1->first));
+		string sss = *($1->first);
+		cseg<<";"<<sss<<endl;
+		cseg<<"; si: "<<sss<<endl;
+		string searchKey = getFirstToken(sss, '[');
+		cseg<<"; search key: "<<searchKey<<endl;
+		SymbolInfo *si = table->lookUp(sss);
 		if(si != nullptr){
 			// cseg<<";var a assign!"<<endl;
-			cseg<<"MOV [BP + -"<<(si->getOffset()*2+10)<<"], AX"<<endl;
+			if(si->getScope() != "1"){
+				if(si->getParam()) cseg<<"MOV [BP + "<<(4+(si->getParamSize()-si->getParam())*2)<<"], AX"<<endl;
+				else cseg<<"MOV [BP + -"<<(si->getOffset()*2+10)<<"], AX"<<endl;
+			}
+			else {
+				cseg<<"MOV ["<<si->getName()<<"], AX"<<endl;
+			}
 		}else{
 			// cseg<<";array te assign!"<<endl;
 			cseg<<"POP BX"<<endl;

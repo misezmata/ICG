@@ -1,25 +1,92 @@
-;Error at line 4: Type mismatch, function is not void
+;Error at line 9: Type mismatch, function is not void
 
 .MODEL SMALL
 .STACK 400h
 
 .DATA
-	x	DW	0
-	ara	DW	10	DUP(0)
 
 .CODE
+foo PROC
+
+; preserving sp(in BP), ax, bx, cx, flags
+PUSH BP
+MOV BP, SP
+
+PUSH AX
+PUSH BX
+PUSH CX
+PUSHF
+; function definition here
+
+MOV BX, [BP + 4]
+PUSH BX
+MOV BX, [BP + 4]
+PUSH BX
+PUSH 3
+
+POP BX
+POP AX
+ADD BX, AX
+PUSH BX
+
+
+POP AX
+;a
+; si: a
+; search key: a
+MOV [BP + 4], AX
+MOV BX, AX
+PUSH BX
+
+POP BX; a=a+3;
+
+MOV BX, [BP + 4]
+PUSH BX
+CALL PRINT_DECIMAL_INTEGER
+;terminating function
+@L_1:
+MOV SP, BP
+SUB SP, 8
+POPF
+POP CX
+POP BX
+POP AX
+POP BP
+
+RET 2
+
+foo ENDP
+
 main PROC
 
 MOV AX, @DATA
 MOV DS, AX
 ; data segment loaded
 
-MOV BX, [x] ; loaded x
+PUSH 0 ; var declared: a offset: 0
+MOV BX, [BP - 10] ; loaded a
 PUSH BX ;stored in stack
-POP BX; x;
+PUSH 10
+
+POP AX
+;a
+; si: a
+; search key: a
+MOV [BP + -10], AX
+MOV BX, AX
+PUSH BX
+
+POP BX; a=10;
+
+MOV BX, [BP - 10] ; loaded a
+PUSH BX ;stored in stack
+CALL foo
+MOV BX, DX
+PUSH BX
+POP BX; foo(a);
 
 
-@L_1:
+@L_2:
 MOV AH, 4CH
 INT 21H
 main ENDP

@@ -7,6 +7,15 @@ string str_replace(string s, char p='.', char n='_'){
     }
     return s;
 }
+string getFirstToken(string s, char c){
+    string ss = "";
+    int l = s.size();
+    for(int i=0; i<l; i++){
+        if(s[i] == c)return ss;
+        ss += s[i];
+    }
+    return ss;
+}
 uint32_t hash_sdbm(string s){
     uint32_t hash = 0;
     int l = s.length();
