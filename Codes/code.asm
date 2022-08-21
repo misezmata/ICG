@@ -22,7 +22,7 @@
 		MOV BX, [ BP-10 ]
 		PUSH BX; line no 3 : a loaded
 		
-		PUSH 2
+		PUSH 5
 		POP AX
 		MOV [BP + -10], AX; line no 3 : a assined
 		MOV BX, AX
@@ -30,96 +30,46 @@
 
 		POP BX; line no 3 : ; previously pushed value on stack is removed
 		
-		; line no 9 : ; for loop start
-		
 		MOV BX, [ BP-12 ]
 		PUSH BX; line no 4 : b loaded
 		
-		PUSH 2
+		PUSH 4
 		POP AX
 		MOV [BP + -12], AX; line no 4 : b assined
 		MOV BX, AX
 		PUSH BX
 
-		POP BX; line no 9 :  ; previously pushed value should be popped
-		@L_6: ; loop start label
-
+		POP BX; line no 4 : ; previously pushed value on stack is removed
 		
-		MOV BX, [ BP-12 ]
-		PUSH BX; line no 4 : b loaded
-		
-		PUSH 4
-		
+		; line no 10 :  starting while loop
+		@L_4: 
 
-		POP BX
-		POP AX
-		CMP AX, BX; line no 4 :  relop operation
-		MOV BX, 1; line no 4 :  First let it assume positive
-		JL @L_2
-		MOV BX, 0; line no 4 :  the condition is false
-		@L_2: 
-
-		PUSH BX
-
-		POP BX
-		CMP BX, 0
-		JE @L_7 ; condition false
-		
-		; line no 8 : ; for loop start
-		
-		MOV BX, [ BP-14 ]
-		PUSH BX; line no 5 : c loaded
-		
-		PUSH 1
-		POP AX
-		MOV [BP + -14], AX; line no 5 : c assined
-		MOV BX, AX
-		PUSH BX
-
-		POP BX; line no 8 :  ; previously pushed value should be popped
-		@L_4: ; loop start label
-
-		
-		MOV BX, [ BP-14 ]
-		PUSH BX; line no 5 : c loaded
-		
-		PUSH 5
-		
-
-		POP BX
-		POP AX
-		CMP AX, BX; line no 5 :  relop operation
-		MOV BX, 1; line no 5 :  First let it assume positive
-		JLE @L_3
-		MOV BX, 0; line no 5 :  the condition is false
-		@L_3: 
-
-		PUSH BX
-
-		POP BX
-		CMP BX, 0
-		JE @L_5 ; condition false
 		
 		MOV BX, [ BP-10 ]
-		PUSH BX; line no 6 : a loaded
+		PUSH BX; line no 5 : a loaded
+		POP AX
+		PUSH AX
+
+		DEC AX
+		MOV [BP + -10], AX; line no 5 : 
+		POP BX
+		CMP BX, 0
+		JE @L_5 ;condition false. so jump to exit
+		
+		; line no 9 :  starting while loop
+		@L_2: 
+
 		
 		MOV BX, [ BP-12 ]
 		PUSH BX; line no 6 : b loaded
-		
-		MOV BX, [ BP-14 ]
-		PUSH BX; line no 6 : c loaded
-		POP BX; line no 6 :  ; multiplication start of integer
-		MOV CX, BX
 		POP AX
-		IMUL CX
-		MOV BX, AX; line no 6 :  ; only last 16 bit is taken in mul
-		PUSH BX
-		POP AX
-		MOV [BP + -10], AX; line no 6 : a assined
-		MOV BX, AX
-		PUSH BX
+		PUSH AX
 
-		POP BX; line no 6 : ; previously pushed value on stack is removed
+		DEC AX
+		MOV [BP + -12], AX; line no 6 : 
+		POP BX
+		CMP BX, 0
+		JE @L_3 ;condition false. so jump to exit
 		
 		MOV BX, [ BP-10 ]
 		PUSH BX; line no 7 : a loaded
@@ -127,27 +77,15 @@
 		PUSH BX
 		CALL PRINT_DECIMAL_INTEGER
 		
-		MOV BX, [ BP-14 ]
-		PUSH BX; line no 5 : c loaded
-		POP AX
-		PUSH AX
-
-		INC AX
-		MOV [BP + -14], AX; line no 5 : 
-		JMP @L_4 ; go to check point
-		@L_5: ; exit loop 
-
-		
 		MOV BX, [ BP-12 ]
-		PUSH BX; line no 4 : b loaded
-		POP AX
-		PUSH AX
-
-		INC AX
-		MOV [BP + -12], AX; line no 4 : 
-		JMP @L_6 ; go to check point
-		@L_7: ; exit loop 
-
+		PUSH BX; line no 8 : b loaded
+		POP BX
+		PUSH BX
+		CALL PRINT_DECIMAL_INTEGER
+		JMP @L_2; again go to begining
+		@L_3: 	; line no 9 : while loop end
+		JMP @L_4; again go to begining
+		@L_5: 	; line no 10 : while loop end
 		
 		; return point main
 		@L_1: 

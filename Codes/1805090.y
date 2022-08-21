@@ -590,6 +590,7 @@ void checkArray(){
 }
 stack<string> ifLabels;
 stack<string> forLabels;
+stack<string> whileLabels;
 
 //UTILS
 
@@ -1031,12 +1032,34 @@ statement : var_declaration {
 		deleteMe($6);
 		deleteMe($9);
 	}
-	| WHILE LPAREN expression RPAREN statement {
+	| WHILE LPAREN {
+		string l1 = getnextLabel();
+		string l2 = getnextLabel();
+		whileLabels.push(l1);
+		whileLabels.push(l2);
+		cseg<<"; while statement started"<<endl;
+		cseg<<"@"<<l1<<":"<<endl;
+	} expression {
+		string l2 = whileLabels.top();
+		whileLabels.pop();
+		string l1 = whileLabels.top();
+		whileLabels.push(l2);
+		cseg<<"CMP BX, 0"<<endl;
+		cseg<<"JE @"<<l2<<endl;
+	} RPAREN statement {
 		print("statement : WHILE LPAREN expression RPAREN statement");
-		$$ = createPSS("while ("+*($3->first)+")"+*($5->first), "null");
+		$$ = createPSS("while ("+*($4->first)+")"+*($7->first), "null");
 		log((*($$->first)).c_str());
-		deleteMe($3);
-		deleteMe($5);
+		string l2 = whileLabels.top();
+		whileLabels.pop();
+		string l1 = whileLabels.top();
+		whileLabels.pop();
+
+		cseg<<"JMP @"<<l1<<endl;
+		cseg<<"@"<<l2<<":"<<endl;
+		cseg<<";while loop ended"<<endl;
+		deleteMe($4);
+		deleteMe($7);
 	}
 	| PRINTLN LPAREN ID RPAREN SEMICOLON {
 		print("statement : PRINTLN LPAREN ID RPAREN SEMICOLON");

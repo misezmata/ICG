@@ -38,45 +38,45 @@ a
 
 Line 3: factor : CONST_INT
 
-2
+5
 
 Line 3: unary_expression : factor
 
-2
+5
 
 Line 3: term : unary_expression
 
-2
+5
 
 Line 3: simple_expression : term
 
-2
+5
 
 Line 3: rel_expression : simple_expression
 
-2
+5
 
 Line 3: logic_expression : rel_expression
 
-2
+5
 
 Line 3: expression : variable ASSIGNOP logic_expression
 
-a=2
+a=5
 
 Line 3: expression_statement : expression SEMICOLON
 
-a=2;
+a=5;
 
 Line 3: statement : expression_statement
 
-a=2;
+a=5;
 
 
 Line 3: statements : statements statement
 
 int a,b,c;
-a=2;
+a=5;
 
 
 Line 4: variable : ID
@@ -85,322 +85,138 @@ b
 
 Line 4: factor : CONST_INT
 
-2
+4
 
 Line 4: unary_expression : factor
 
-2
+4
 
 Line 4: term : unary_expression
 
-2
+4
 
 Line 4: simple_expression : term
 
-2
+4
 
 Line 4: rel_expression : simple_expression
 
-2
+4
 
 Line 4: logic_expression : rel_expression
 
-2
+4
 
 Line 4: expression : variable ASSIGNOP logic_expression
 
-b=2
+b=4
 
 Line 4: expression_statement : expression SEMICOLON
 
-b=2;
+b=4;
 
-Line 4: variable : ID
+Line 4: statement : expression_statement
 
-b
+b=4;
 
-Line 4: factor : variable
 
-b
+Line 4: statements : statements statement
 
-Line 4: unary_expression : factor
+int a,b,c;
+a=5;
+b=4;
 
-b
-
-Line 4: term : unary_expression
-
-b
-
-Line 4: simple_expression : term
-
-b
-
-Line 4: factor : CONST_INT
-
-4
-
-Line 4: unary_expression : factor
-
-4
-
-Line 4: term : unary_expression
-
-4
-
-Line 4: simple_expression : term
-
-4
-
-Line 4: rel_expression : simple_expression RELOP simple_expression
-
-b<4
-
-Line 4: logic_expression : rel_expression
-
-b<4
-
-Line 4: expression : logic_expression
-
-b<4
-
-Line 4: expression_statement : expression SEMICOLON
-
-b<4;
-
-Line 4: variable : ID
-
-b
-
-Line 4: factor : variable INCOP
-
-b++
-
-Line 4: unary_expression : factor
-
-b++
-
-Line 4: term : unary_expression
-
-b++
-
-Line 4: simple_expression : term
-
-b++
-
-Line 4: rel_expression : simple_expression
-
-b++
-
-Line 4: logic_expression : rel_expression
-
-b++
-
-Line 4: expression : logic_expression
-
-b++
 
 Line 5: variable : ID
-
-c
-
-Line 5: factor : CONST_INT
-
-1
-
-Line 5: unary_expression : factor
-
-1
-
-Line 5: term : unary_expression
-
-1
-
-Line 5: simple_expression : term
-
-1
-
-Line 5: rel_expression : simple_expression
-
-1
-
-Line 5: logic_expression : rel_expression
-
-1
-
-Line 5: expression : variable ASSIGNOP logic_expression
-
-c=1
-
-Line 5: expression_statement : expression SEMICOLON
-
-c=1;
-
-Line 5: variable : ID
-
-c
-
-Line 5: factor : variable
-
-c
-
-Line 5: unary_expression : factor
-
-c
-
-Line 5: term : unary_expression
-
-c
-
-Line 5: simple_expression : term
-
-c
-
-Line 5: factor : CONST_INT
-
-5
-
-Line 5: unary_expression : factor
-
-5
-
-Line 5: term : unary_expression
-
-5
-
-Line 5: simple_expression : term
-
-5
-
-Line 5: rel_expression : simple_expression RELOP simple_expression
-
-c<=5
-
-Line 5: logic_expression : rel_expression
-
-c<=5
-
-Line 5: expression : logic_expression
-
-c<=5
-
-Line 5: expression_statement : expression SEMICOLON
-
-c<=5;
-
-Line 5: variable : ID
-
-c
-
-Line 5: factor : variable INCOP
-
-c++
-
-Line 5: unary_expression : factor
-
-c++
-
-Line 5: term : unary_expression
-
-c++
-
-Line 5: simple_expression : term
-
-c++
-
-Line 5: rel_expression : simple_expression
-
-c++
-
-Line 5: logic_expression : rel_expression
-
-c++
-
-Line 5: expression : logic_expression
-
-c++
-
-Line 6: variable : ID
 
 a
 
+Line 5: factor : variable DECOP
+
+a--
+
+Line 5: unary_expression : factor
+
+a--
+
+Line 5: term : unary_expression
+
+a--
+
+Line 5: simple_expression : term
+
+a--
+
+Line 5: rel_expression : simple_expression
+
+a--
+
+Line 5: logic_expression : rel_expression
+
+a--
+
+Line 5: expression : logic_expression
+
+a--
+
 Line 6: variable : ID
 
 b
 
-Line 6: factor : variable
+Line 6: factor : variable DECOP
 
-b
+b--
 
 Line 6: unary_expression : factor
 
-b
+b--
 
 Line 6: term : unary_expression
 
-b
-
-Line 6: variable : ID
-
-c
-
-Line 6: factor : variable
-
-c
-
-Line 6: unary_expression : factor
-
-c
-
-Line 6: term : term MULOP unary_expression
-
-b*c
+b--
 
 Line 6: simple_expression : term
 
-b*c
+b--
 
 Line 6: rel_expression : simple_expression
 
-b*c
+b--
 
 Line 6: logic_expression : rel_expression
 
-b*c
+b--
 
-Line 6: expression : variable ASSIGNOP logic_expression
+Line 6: expression : logic_expression
 
-a=b*c
-
-Line 6: expression_statement : expression SEMICOLON
-
-a=b*c;
-
-Line 6: statement : expression_statement
-
-a=b*c;
-
-
-Line 6: statements : statement
-
-a=b*c;
-
+b--
 
 Line 7: statement : PRINTLN LPAREN ID RPAREN SEMICOLON
 
 printf(a);
 
 
-Line 7: statements : statements statement
+Line 7: statements : statement
 
-a=b*c;
 printf(a);
 
 
-Line 8: compound_statement : LCURL statements RCURL
+Line 8: statement : PRINTLN LPAREN ID RPAREN SEMICOLON
+
+printf(b);
+
+
+Line 8: statements : statements statement
+
+printf(a);
+printf(b);
+
+
+Line 9: compound_statement : LCURL statements RCURL
 
 {
-a=b*c;
 printf(a);
+printf(b);
 }
 
 
@@ -425,36 +241,36 @@ ScopeTable # 1
  6 --> < main , ID > 
 
 
-Line 8: statement : compound_statement
+Line 9: statement : compound_statement
 
 {
-a=b*c;
 printf(a);
+printf(b);
 }
 
 
-Line 8: statement : FOR LPAREN expression_statement expression_statement expression RPAREN statement
+Line 9: statement : WHILE LPAREN expression RPAREN statement
 
-for(c=1;c<=5;c++){
-a=b*c;
+while (b--){
 printf(a);
+printf(b);
 }
 
 
-Line 8: statements : statement
+Line 9: statements : statement
 
-for(c=1;c<=5;c++){
-a=b*c;
+while (b--){
 printf(a);
+printf(b);
 }
 
 
-Line 9: compound_statement : LCURL statements RCURL
+Line 10: compound_statement : LCURL statements RCURL
 
 {
-for(c=1;c<=5;c++){
-a=b*c;
+while (b--){
 printf(a);
+printf(b);
 }
 }
 
@@ -476,47 +292,49 @@ ScopeTable # 1
  6 --> < main , ID > 
 
 
-Line 9: statement : compound_statement
+Line 10: statement : compound_statement
 
 {
-for(c=1;c<=5;c++){
-a=b*c;
+while (b--){
 printf(a);
+printf(b);
 }
 }
 
 
-Line 9: statement : FOR LPAREN expression_statement expression_statement expression RPAREN statement
+Line 10: statement : WHILE LPAREN expression RPAREN statement
 
-for(b=2;b<4;b++){
-for(c=1;c<=5;c++){
-a=b*c;
+while (a--){
+while (b--){
 printf(a);
+printf(b);
 }
 }
 
 
-Line 9: statements : statements statement
+Line 10: statements : statements statement
 
 int a,b,c;
-a=2;
-for(b=2;b<4;b++){
-for(c=1;c<=5;c++){
-a=b*c;
+a=5;
+b=4;
+while (a--){
+while (b--){
 printf(a);
+printf(b);
 }
 }
 
 
-Line 10: compound_statement : LCURL statements RCURL
+Line 11: compound_statement : LCURL statements RCURL
 
 {
 int a,b,c;
-a=2;
-for(b=2;b<4;b++){
-for(c=1;c<=5;c++){
-a=b*c;
+a=5;
+b=4;
+while (a--){
+while (b--){
 printf(a);
+printf(b);
 }
 }
 }
@@ -535,53 +353,56 @@ ScopeTable # 1
  6 --> < main , ID > 
 
 
-Line 10: func_definition : type_specifier ID LPAREN RPAREN compound_statement
+Line 11: func_definition : type_specifier ID LPAREN RPAREN compound_statement
 
-Error at line 10: Type mismatch, function is not void
-
-int main(){
-int a,b,c;
-a=2;
-for(b=2;b<4;b++){
-for(c=1;c<=5;c++){
-a=b*c;
-printf(a);
-}
-}
-}
-
-
-Line 10: unit : func_definition
+Error at line 11: Type mismatch, function is not void
 
 int main(){
 int a,b,c;
-a=2;
-for(b=2;b<4;b++){
-for(c=1;c<=5;c++){
-a=b*c;
+a=5;
+b=4;
+while (a--){
+while (b--){
 printf(a);
+printf(b);
 }
 }
 }
 
 
-
-Line 10: program : unit
+Line 11: unit : func_definition
 
 int main(){
 int a,b,c;
-a=2;
-for(b=2;b<4;b++){
-for(c=1;c<=5;c++){
-a=b*c;
+a=5;
+b=4;
+while (a--){
+while (b--){
 printf(a);
+printf(b);
 }
 }
 }
 
 
 
-Line 10: start : program
+Line 11: program : unit
+
+int main(){
+int a,b,c;
+a=5;
+b=4;
+while (a--){
+while (b--){
+printf(a);
+printf(b);
+}
+}
+}
+
+
+
+Line 11: start : program
 
 
 
@@ -589,6 +410,6 @@ ScopeTable # 1
  6 --> < main , ID > 
 
 
-Total lines: 10
+Total lines: 11
 Total errors: 1
 
