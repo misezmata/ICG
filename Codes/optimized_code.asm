@@ -17,16 +17,26 @@
 		
 		PUSH BX ; line no 2 : a declared
 		
-		MOV BX, [ BP-10 ]
-		PUSH BX; line no 3 : a loaded
+		; if else statement
 		
-		PUSH 10
+		PUSH 0
+		POP BX
+		CMP BX, 0
+		JE @L_4 ; go to else
+		
+		MOV BX, [ BP-10 ]
+		PUSH BX; line no 4 : a loaded
+		
+		PUSH 2
 		POP AX
-		MOV [BP + -10], AX; line no 3 : a assined
+		MOV [BP + -10], AX; line no 4 : a assined
 		MOV BX, AX
-; peepholed 29		PUSH BX
+; peepholed 36		PUSH BX
 
-; peepholed 27		POP BX; line no 3 : ; previously pushed value on stack is removed
+; peepholed 34		POP BX; line no 4 : ; previously pushed value on stack is removed
+		JMP @L_5 ; exit
+		@L_4:  ; else label
+
 		
 		; if else statement
 		
@@ -36,35 +46,37 @@
 		JE @L_2 ; go to else
 		
 		MOV BX, [ BP-10 ]
-		PUSH BX; line no 5 : a loaded
+		PUSH BX; line no 6 : a loaded
 		
-		PUSH 20
+		PUSH 1
 		POP AX
-		MOV [BP + -10], AX; line no 5 : a assined
+		MOV [BP + -10], AX; line no 6 : a assined
 		MOV BX, AX
-; peepholed 47		PUSH BX
+; peepholed 57		PUSH BX
 
-; peepholed 45		POP BX; line no 5 : ; previously pushed value on stack is removed
+; peepholed 55		POP BX; line no 6 : ; previously pushed value on stack is removed
 		JMP @L_3 ; exit
 		@L_2:  ; else label
 
 		
 		MOV BX, [ BP-10 ]
-		PUSH BX; line no 7 : a loaded
+		PUSH BX; line no 9 : a loaded
 		
-		PUSH 30
+		PUSH 3
 		POP AX
-		MOV [BP + -10], AX; line no 7 : a assined
+		MOV [BP + -10], AX; line no 9 : a assined
 		MOV BX, AX
-; peepholed 61		PUSH BX
+; peepholed 71		PUSH BX
 
-; peepholed 59		POP BX; line no 7 : ; previously pushed value on stack is removed
+; peepholed 69		POP BX; line no 9 : ; previously pushed value on stack is removed
 		@L_3: ; if else exit
+
+		@L_5: ; if else exit
 
 		
 		MOV BX, [ BP-10 ]
-; peepholed 67		PUSH BX; line no 9 : a loaded
-; peepholed 66		POP BX
+; peepholed 79		PUSH BX; line no 11 : a loaded
+; peepholed 78		POP BX
 		PUSH BX
 		CALL PRINT_DECIMAL_INTEGER
 		

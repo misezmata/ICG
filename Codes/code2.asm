@@ -1,4 +1,4 @@
-;Error at line 10: Type mismatch, function is not void
+;Error at line 12: Type mismatch, function is not void
 
 .MODEL SMALL
 .STACK 400h
@@ -13,50 +13,58 @@ MOV DS, AX
 ; data segment loaded
 
 PUSH 0 ; var declared: a offset: 0
-MOV BX, [BP - 10] ; loaded a
-PUSH BX ;stored in stack
-PUSH 10
-
-POP AX
-MOV [BP + -10], AX
-MOV BX, AX
-PUSH BX
-
-POP BX; a=10;
-
 PUSH 0
-; if (expr) statement
 POP BX
 CMP BX, 0
-JE @L_1
+JE @L_3
 MOV BX, [BP - 10] ; loaded a
 PUSH BX ;stored in stack
-PUSH 20
+PUSH 2
 
 POP AX
 MOV [BP + -10], AX
 MOV BX, AX
 PUSH BX
 
-POP BX; a=20;
+POP BX; a=2;
 
-@L_1:
+JMP @L_2
+@L_3:
+PUSH 0
+POP BX
+CMP BX, 0
+JE @L_5
 MOV BX, [BP - 10] ; loaded a
 PUSH BX ;stored in stack
-PUSH 30
+PUSH 1
 
 POP AX
 MOV [BP + -10], AX
 MOV BX, AX
 PUSH BX
 
-POP BX; a=30;
+POP BX; a=1;
 
+JMP @L_4
+@L_5:
+MOV BX, [BP - 10] ; loaded a
+PUSH BX ;stored in stack
+PUSH 3
+
+POP AX
+MOV [BP + -10], AX
+MOV BX, AX
+PUSH BX
+
+POP BX; a=3;
+
+@L_4:
+@L_2:
 MOV BX, [BP - 10]
 PUSH BX
 CALL PRINT_DECIMAL_INTEGER
 
-@L_0:
+@L_1:
 MOV AH, 4CH
 INT 21H
 main ENDP

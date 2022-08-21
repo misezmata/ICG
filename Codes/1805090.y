@@ -192,8 +192,8 @@ string getStringFromArgumentList(vector<pair<string*, string*>*> vpss){
 	}
 	return builder;
 }
-int levelCount = 0;
-string getNextLevel(){
+int levelCount = 1;
+string getnextLabel(){
 	return "L_"+to_string(levelCount++);
 }
 
@@ -211,8 +211,8 @@ void insertToSymbolTable(string type, vector<SymbolInfo*> v){
 			else {
 				if(v[i]->getSize() == 0) cseg<<"PUSH 0 ; var declared: "<<v[i]->getName()<<" offset: "<<v[i]->getOffset()<<endl;
 				else{
-					string l1 = getNextLevel();
-					string l2 = getNextLevel();
+					string l1 = getnextLabel();
+					string l2 = getnextLabel();
 					cseg<<"; var declared: "<<v[i]->getName()<<"["<<v[i]->getSize()<<"]; offset: "<<v[i]->getOffset()<<endl;
 					cseg<<"MOV CX, "<<v[i]->getSize()<<endl;
 					cseg<<"@"<<l1<<":"<<endl;
@@ -588,7 +588,7 @@ void checkArray(){
 	}
 	isLastIdArray = false;
 }
-string skipLabel;
+stack<string> ifLabels;
 
 //UTILS
 
@@ -608,7 +608,7 @@ string skipLabel;
 %type <sstring> type_specifier var_declaration func_declaration
 %type <pss> expression_statement factor variable expression logic_expression rel_expression simple_expression term unary_expression
 %type <vss> arguments argument_list
-%type <pss> statement new_if_statement compound_statement statements func_definition unit program start
+%type <pss> statement compound_statement statements func_definition unit program start
 // %left 
 // %right
 
@@ -692,7 +692,7 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON {
 func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 			initProc(($2->getName()));
 			insertFunctionIdToSymbolTable($2, *$1, true, $4);
-			functionReturnLabel = getNextLevel();
+			functionReturnLabel = getnextLabel();
 		} compound_statement {
 		print("func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement");
 		// insertFunctionIdToSymbolTable($2, *$1, true, $4);
@@ -723,7 +723,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 	| type_specifier ID LPAREN RPAREN {
 			initProc(($2->getName()));
 			insertFunctionIdToSymbolTable($2, *$1, true, new vector<SymbolInfo*>);
-			functionReturnLabel = getNextLevel();
+			functionReturnLabel = getnextLabel();
 		} compound_statement {
 		// errorr("eikhane ekhane!");
 		print("func_definition : type_specifier ID LPAREN RPAREN compound_statement");
@@ -926,14 +926,32 @@ statement : var_declaration {
 		deleteMe($5);
 		deleteMe($7);
 	}
-	| new_if_statement %prec LOWER_THAN_ELSE {
-		$$ = $1;
+	| IF LPAREN expression ifExtraGrammar RPAREN statement %prec LOWER_THAN_ELSE {
+		print("statement : IF LPAREN expression RPAREN statement");
+		string s = "if (" + *($3->first) +")" + *($6->first);
+		$$ = createPSS(s, *($6->second));
+		log((*($$->first)).c_str());
+		
+		ifLabels.pop();
+		string exitLabel = ifLabels.top();
+		ifLabels.pop();
+		cseg<<"@"<<exitLabel<<":"<<endl;
+		deleteMe($3);
+		deleteMe($6);
 	}
-	| new_if_statement ELSE statement {
+	| IF LPAREN expression ifExtraGrammar RPAREN statement ELSE {
+			string elseLabel = ifLabels.top();
+			ifLabels.pop();
+			string exitLabel = ifLabels.top();
+			// ifLabels.pop();
+			cseg<<"JMP @"<<exitLabel<<endl;
+			cseg<<"@"<<elseLabel<<":"<<endl;
+
+		}statement {
 		print("statement : IF LPAREN expression RPAREN statement ELSE statement");
-		string s = *($1->first) + "else\n"+ *($3->first);
-		string t1 = *($1->second);
-		string t2 = *($3->second);
+		string s = "if ("+*($3->first)+")"+*($6->first) + "else\n"+ *($9->first) ;
+		string t1 = *($6->second);
+		string t2 = *($9->second);
 		normalize(t1, t2);
 		string type = t1;
 		if(t1 != t2){
@@ -943,8 +961,11 @@ statement : var_declaration {
 		}
 		$$ = createPSS(s, type);
 		log((*($$->first)).c_str());
-		deleteMe($1);
+		cseg<<"@"<<ifLabels.top()<<":"<<endl;
+		ifLabels.pop();
 		deleteMe($3);
+		deleteMe($6);
+		deleteMe($9);
 	}
 	| WHILE LPAREN expression RPAREN statement {
 		print("statement : WHILE LPAREN expression RPAREN statement");
@@ -978,21 +999,6 @@ statement : var_declaration {
 	}
 ;
 
-new_if_statement : IF LPAREN expression {
-		skipLabel = getNextLevel();
-		cseg<<"; if (expr) statement"<<endl;
-		cseg<<"POP BX"<<endl;
-		cseg<<"CMP BX, 0"<<endl;
-		cseg<<"JE @"<<skipLabel<<endl;
-	} RPAREN statement {
-	print("statement : IF LPAREN expression RPAREN statement");
-	string s = "if (" + *($3->first) +")" + *($6->first);
-	$$ = createPSS(s, *($6->second));
-	log((*($$->first)).c_str());
-	cseg<<"@"<<skipLabel<<":"<<endl;
-	deleteMe($3);
-	deleteMe($6);
-}
 
 expression_statement : SEMICOLON	{
 		print("expression_statement : SEMICOLON");
@@ -1087,8 +1093,8 @@ logic_expression : rel_expression {
 		checkLogicAndRelExpression(*($1->second), *($3->second));
 		$$ = createPSS (*($1->first) + $2->getName() + *($3->first), "int");
 		log((*($$->first)).c_str());
-		string label1 = getNextLevel();
-		string label2 = getNextLevel();
+		string label1 = getnextLabel();
+		string label2 = getnextLabel();
 		if($2->getName() == "&&"){
 			cseg<<";logical and"<<endl;
 			cseg<<"POP BX"<<endl;
@@ -1123,7 +1129,7 @@ rel_expression	: simple_expression {
 		checkLogicAndRelExpression(*($1->second), *($3->second));
 		$$ = createPSS (*($1->first) + $2->getName() + *($3->first), "int");
 		log((*($$->first)).c_str());
-		string nextLabel = getNextLevel();
+		string nextLabel = getnextLabel();
 		string op = $2->getName();
 		
 		cseg<<"POP BX"<<endl;
@@ -1206,7 +1212,7 @@ unary_expression : ADDOP unary_expression {
 		$$ = createPSS ("!"+(*($2->first)),"int");
 		// log((*($$->first)).c_str());
 		log((*($$->first)).c_str());
-		string nextLabel = getNextLevel();
+		string nextLabel = getnextLabel();
 		cseg<<endl;
 		
 		cseg<<"POP BX"<<endl;
@@ -1285,7 +1291,7 @@ argument_list : arguments {
 		$$ = $1;
 		log(getStringFromArguments(*$$).c_str());
 	}
-	| {
+	| %empty{
 		$$ = new vector<pair<string*, string*>*>;
 		log(getStringFromArguments(*$$).c_str());
 	}
@@ -1302,6 +1308,16 @@ arguments : arguments COMMA logic_expression {
 		log(getStringFromArguments(*$$).c_str());
 	}
 ;
+
+ifExtraGrammar: %empty {
+		string exitLabel = getnextLabel();
+		string elseLabel = getnextLabel();
+		ifLabels.push(exitLabel);
+		ifLabels.push(elseLabel);
+		cseg<<"POP BX"<<endl;
+		cseg<<"CMP BX, 0"<<endl;
+		cseg<<"JE @"<<elseLabel<<endl;
+	};
 
 %%
 int main(int argc,char *argv[])

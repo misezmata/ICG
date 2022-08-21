@@ -1,12 +1,12 @@
 int main(){
     int a;
-    a = 10;
     if(0){
-        a = 20;
+        a = 2;
     }else if(0){
-        a = 30;
-    }else {
-        a = 50;
+        a = 1;
+    } 
+    else{
+        a = 3;
     }
     printf(a);
 }
