@@ -1,178 +1,25 @@
-;Error at line 13: Type mismatch, function is not void
+;Error at line 4: Type mismatch, function is not void
 
 .MODEL SMALL
 .STACK 400h
 
 .DATA
+	x	DW	0
+	ara	DW	10	DUP(0)
 
 .CODE
-fib PROC
-
-; preserving sp(in BP), ax, bx, cx, flags
-PUSH BP
-MOV BP, SP
-
-PUSH AX
-PUSH BX
-PUSH CX
-PUSHF
-; function definition here
-
-MOV BX, [BP + 4]
-PUSH BX
-PUSH 1
-POP BX
-POP AX
-CMP AX, BX
-MOV BX, 1
-JE @L_2
-MOV BX, 0
-@L_2: 
-PUSH BX
-
-MOV BX, [BP + 4]
-PUSH BX
-PUSH 2
-POP BX
-POP AX
-CMP AX, BX
-MOV BX, 1
-JE @L_3
-MOV BX, 0
-@L_3: 
-PUSH BX
-
-;logical or
-POP BX
-POP AX
-OR BX, AX
-PUSH BX
-POP BX
-CMP BX, 0
-JE @L_6
-PUSH 1
-POP BX
-MOV DX, BX
-JMP @L_1
-@L_6:
-MOV BX, [BP + 4]
-PUSH BX
-PUSH 1
-
-POP BX
-POP AX
-SUB AX, BX
-MOV BX, AX
-PUSH BX
-
-CALL fib
-MOV BX, DX
-PUSH BX
-MOV BX, [BP + 4]
-PUSH BX
-PUSH 2
-
-POP BX
-POP AX
-SUB AX, BX
-MOV BX, AX
-PUSH BX
-
-CALL fib
-MOV BX, DX
-PUSH BX
-
-POP BX
-POP AX
-ADD BX, AX
-PUSH BX
-
-POP BX
-MOV DX, BX
-JMP @L_1
-;terminating function
-@L_1:
-MOV SP, BP
-SUB SP, 8
-POPF
-POP CX
-POP BX
-POP AX
-POP BP
-
-RET 2
-
-fib ENDP
-
 main PROC
 
 MOV AX, @DATA
 MOV DS, AX
 ; data segment loaded
 
-PUSH 0 ; var declared: a offset: 0
-;for started
-MOV BX, [BP - 10] ; loaded a
+MOV BX, [x] ; loaded x
 PUSH BX ;stored in stack
-PUSH 1
+POP BX; x;
 
-POP AX
-MOV [BP + -10], AX
-MOV BX, AX
-PUSH BX
 
-POP BX; a=1;
-
-@L_9:
-MOV BX, [BP - 10] ; loaded a
-PUSH BX ;stored in stack
-PUSH 10
-POP BX
-POP AX
-CMP AX, BX
-MOV BX, 1
-JL @L_13
-MOV BX, 0
-@L_13: 
-PUSH BX
-
-POP BX; a<10;
-
-CMP BX, 0
-JE @L_12
-JMP @L_11
-@L_10:
-MOV BX, [BP - 10] ; loaded a
-PUSH BX ;stored in stack
-POP AX
-PUSH AX
-INC AX
-MOV [BP + -10], AX
-JMP @L_9
-@L_11:
-PUSH 0 ; var declared: c offset: 0
-MOV BX, [BP - 12] ; loaded c
-PUSH BX ;stored in stack
-MOV BX, [BP - 10] ; loaded a
-PUSH BX ;stored in stack
-CALL fib
-MOV BX, DX
-PUSH BX
-
-POP AX
-MOV [BP + -12], AX
-MOV BX, AX
-PUSH BX
-
-POP BX; c=fib(a);
-
-MOV BX, [BP - 12]
-PUSH BX
-CALL PRINT_DECIMAL_INTEGER
-JMP @L_10
-@L_12:
-
-@L_8:
+@L_1:
 MOV AH, 4CH
 INT 21H
 main ENDP

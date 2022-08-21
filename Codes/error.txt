@@ -1,2 +1,2 @@
-Error at line 13: Type mismatch, function is not void
+Error at line 4: Type mismatch, function is not void
 
