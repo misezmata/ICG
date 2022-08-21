@@ -16,69 +16,138 @@
 		; data segment loaded
 		
 		PUSH BX ; line no 2 : a declared
-		
-		; if else statement
-		
-		PUSH 0
-		POP BX
-		CMP BX, 0
-		JE @L_4 ; go to else
+		PUSH BX ; line no 2 : b declared
+		PUSH BX ; line no 2 : c declared
 		
 		MOV BX, [ BP-10 ]
-		PUSH BX; line no 4 : a loaded
+		PUSH BX; line no 3 : a loaded
 		
 		PUSH 2
 		POP AX
-		MOV [BP + -10], AX; line no 4 : a assined
+		MOV [BP + -10], AX; line no 3 : a assined
 		MOV BX, AX
-; peepholed 36		PUSH BX
+; peepholed 31		PUSH BX
 
-; peepholed 34		POP BX; line no 4 : ; previously pushed value on stack is removed
-		JMP @L_5 ; exit
-		@L_4:  ; else label
+; peepholed 29		POP BX; line no 3 : ; previously pushed value on stack is removed
+		
+		; line no 9 : ; for loop start
+		
+		MOV BX, [ BP-12 ]
+		PUSH BX; line no 4 : b loaded
+		
+		PUSH 2
+		POP AX
+		MOV [BP + -12], AX; line no 4 : b assined
+		MOV BX, AX
+; peepholed 44		PUSH BX
+
+; peepholed 42		POP BX; line no 9 :  ; previously pushed value should be popped
+		@L_6: ; loop start label
 
 		
-		; if else statement
+		MOV BX, [ BP-12 ]
+		PUSH BX; line no 4 : b loaded
 		
-		PUSH 0
+		PUSH 4
+		
+
 		POP BX
+		POP AX
+		CMP AX, BX; line no 4 :  relop operation
+		MOV BX, 1; line no 4 :  First let it assume positive
+		JL @L_2
+		MOV BX, 0; line no 4 :  the condition is false
+		@L_2: 
+
+; peepholed 64		PUSH BX
+
+; peepholed 62		POP BX
 		CMP BX, 0
-		JE @L_2 ; go to else
+		JE @L_7 ; condition false
+		
+		; line no 8 : ; for loop start
+		
+		MOV BX, [ BP-14 ]
+		PUSH BX; line no 5 : c loaded
+		
+		PUSH 1
+		POP AX
+		MOV [BP + -14], AX; line no 5 : c assined
+		MOV BX, AX
+; peepholed 79		PUSH BX
+
+; peepholed 77		POP BX; line no 8 :  ; previously pushed value should be popped
+		@L_4: ; loop start label
+
+		
+		MOV BX, [ BP-14 ]
+		PUSH BX; line no 5 : c loaded
+		
+		PUSH 5
+		
+
+		POP BX
+		POP AX
+		CMP AX, BX; line no 5 :  relop operation
+		MOV BX, 1; line no 5 :  First let it assume positive
+		JLE @L_3
+		MOV BX, 0; line no 5 :  the condition is false
+		@L_3: 
+
+; peepholed 99		PUSH BX
+
+; peepholed 97		POP BX
+		CMP BX, 0
+		JE @L_5 ; condition false
 		
 		MOV BX, [ BP-10 ]
 		PUSH BX; line no 6 : a loaded
 		
-		PUSH 1
+		MOV BX, [ BP-12 ]
+		PUSH BX; line no 6 : b loaded
+		
+		MOV BX, [ BP-14 ]
+; peepholed 111		PUSH BX; line no 6 : c loaded
+; peepholed 110		POP BX; line no 6 :  ; multiplication start of integer
+		MOV CX, BX
+		POP AX
+		IMUL CX
+		MOV BX, AX; line no 6 :  ; only last 16 bit is taken in mul
+		PUSH BX
 		POP AX
 		MOV [BP + -10], AX; line no 6 : a assined
 		MOV BX, AX
-; peepholed 57		PUSH BX
+; peepholed 122		PUSH BX
 
-; peepholed 55		POP BX; line no 6 : ; previously pushed value on stack is removed
-		JMP @L_3 ; exit
-		@L_2:  ; else label
-
+; peepholed 120		POP BX; line no 6 : ; previously pushed value on stack is removed
 		
 		MOV BX, [ BP-10 ]
-		PUSH BX; line no 9 : a loaded
-		
-		PUSH 3
-		POP AX
-		MOV [BP + -10], AX; line no 9 : a assined
-		MOV BX, AX
-; peepholed 71		PUSH BX
-
-; peepholed 69		POP BX; line no 9 : ; previously pushed value on stack is removed
-		@L_3: ; if else exit
-
-		@L_5: ; if else exit
-
-		
-		MOV BX, [ BP-10 ]
-; peepholed 79		PUSH BX; line no 11 : a loaded
-; peepholed 78		POP BX
+; peepholed 126		PUSH BX; line no 7 : a loaded
+; peepholed 125		POP BX
 		PUSH BX
 		CALL PRINT_DECIMAL_INTEGER
+		
+		MOV BX, [ BP-14 ]
+		PUSH BX; line no 5 : c loaded
+		POP AX
+		PUSH AX
+
+		INC AX
+		MOV [BP + -14], AX; line no 5 : 
+		JMP @L_4 ; go to check point
+		@L_5: ; exit loop 
+
+		
+		MOV BX, [ BP-12 ]
+		PUSH BX; line no 4 : b loaded
+		POP AX
+		PUSH AX
+
+		INC AX
+		MOV [BP + -12], AX; line no 4 : 
+		JMP @L_6 ; go to check point
+		@L_7: ; exit loop 
+
 		
 		; return point main
 		@L_1: 

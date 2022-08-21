@@ -1,12 +1,10 @@
 int main(){
-    int a;
-    if(0){
-        a = 2;
-    }else if(0){
-        a = 1;
-    } 
-    else{
-        a = 3;
+    int a, b, c;
+    a = 2;
+    for(b = 2; b<4; b++){
+        for(c = 1; c<=5; c++){
+            a = b * c;
+            printf(a);
+        }
     }
-    printf(a);
 }

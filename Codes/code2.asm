@@ -1,4 +1,4 @@
-;Error at line 12: Type mismatch, function is not void
+;Error at line 10: Type mismatch, function is not void
 
 .MODEL SMALL
 .STACK 400h
@@ -13,10 +13,8 @@ MOV DS, AX
 ; data segment loaded
 
 PUSH 0 ; var declared: a offset: 0
-PUSH 0
-POP BX
-CMP BX, 0
-JE @L_3
+PUSH 0 ; var declared: b offset: 0
+PUSH 0 ; var declared: c offset: 0
 MOV BX, [BP - 10] ; loaded a
 PUSH BX ;stored in stack
 PUSH 2
@@ -28,41 +26,113 @@ PUSH BX
 
 POP BX; a=2;
 
-JMP @L_2
-@L_3:
-PUSH 0
+;for started
+MOV BX, [BP - 12] ; loaded b
+PUSH BX ;stored in stack
+PUSH 2
+
+POP AX
+MOV [BP + -12], AX
+MOV BX, AX
+PUSH BX
+
+POP BX; b=2;
+
+@L_2:
+MOV BX, [BP - 12] ; loaded b
+PUSH BX ;stored in stack
+PUSH 4
 POP BX
+POP AX
+CMP AX, BX
+MOV BX, 1
+JL @L_6
+MOV BX, 0
+@L_6: 
+PUSH BX
+
+POP BX; b<4;
+
 CMP BX, 0
 JE @L_5
-MOV BX, [BP - 10] ; loaded a
+JMP @L_4
+@L_3:
+MOV BX, [BP - 12] ; loaded b
+PUSH BX ;stored in stack
+POP AX
+PUSH AX
+INC AX
+MOV [BP + -12], AX
+JMP @L_2
+@L_4:
+;for started
+MOV BX, [BP - 14] ; loaded c
 PUSH BX ;stored in stack
 PUSH 1
 
 POP AX
-MOV [BP + -10], AX
+MOV [BP + -14], AX
 MOV BX, AX
 PUSH BX
 
-POP BX; a=1;
+POP BX; c=1;
 
-JMP @L_4
-@L_5:
+@L_7:
+MOV BX, [BP - 14] ; loaded c
+PUSH BX ;stored in stack
+PUSH 5
+POP BX
+POP AX
+CMP AX, BX
+MOV BX, 1
+JLE @L_11
+MOV BX, 0
+@L_11: 
+PUSH BX
+
+POP BX; c<=5;
+
+CMP BX, 0
+JE @L_10
+JMP @L_9
+@L_8:
+MOV BX, [BP - 14] ; loaded c
+PUSH BX ;stored in stack
+POP AX
+PUSH AX
+INC AX
+MOV [BP + -14], AX
+JMP @L_7
+@L_9:
 MOV BX, [BP - 10] ; loaded a
 PUSH BX ;stored in stack
-PUSH 3
+MOV BX, [BP - 12] ; loaded b
+PUSH BX ;stored in stack
+MOV BX, [BP - 14] ; loaded c
+PUSH BX ;stored in stack
+; MULTIPLICATION STARTS
+POP BX
+MOV CX, BX
+POP AX
+IMUL CX
+MOV BX, AX
+PUSH BX
+; MULTIPLICATION ENDS
 
 POP AX
 MOV [BP + -10], AX
 MOV BX, AX
 PUSH BX
 
-POP BX; a=3;
+POP BX; a=b*c;
 
-@L_4:
-@L_2:
 MOV BX, [BP - 10]
 PUSH BX
 CALL PRINT_DECIMAL_INTEGER
+JMP @L_8
+@L_10:
+JMP @L_3
+@L_5:
 
 @L_1:
 MOV AH, 4CH

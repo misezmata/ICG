@@ -589,6 +589,7 @@ void checkArray(){
 	isLastIdArray = false;
 }
 stack<string> ifLabels;
+stack<string> forLabels;
 
 //UTILS
 
@@ -916,15 +917,77 @@ statement : var_declaration {
 		$$ = $1;
 		log((*($$->first)).c_str());
 	}
-	| FOR LPAREN expression_statement expression_statement expression RPAREN statement {
+	| FOR LPAREN {
+		forLabels.push(getnextLabel());//e2
+		forLabels.push(getnextLabel());//e3
+		forLabels.push(getnextLabel());//stmt
+		forLabels.push(getnextLabel());//forexit
+		cseg<<";for started"<<endl;
+	} expression_statement {
+		string forExitLabel = forLabels.top();
+		forLabels.pop();
+		string forStmt = forLabels.top();
+		forLabels.pop();
+		string e3Lab = forLabels.top();
+		forLabels.pop();
+		string e2Lab = forLabels.top();
+		forLabels.push(e3Lab);
+		forLabels.push(forStmt);
+		forLabels.push(forExitLabel);
+
+		cseg<<"@"<<e2Lab<<":"<<endl;
+	} expression_statement {
+		string forExitLabel = forLabels.top();
+		forLabels.pop();
+		string forStmt = forLabels.top();
+		forLabels.pop();
+		string e3Lab = forLabels.top();
+		forLabels.pop();
+		string e2Lab = forLabels.top();
+		forLabels.push(e3Lab);
+		forLabels.push(forStmt);
+		forLabels.push(forExitLabel);
+
+		cseg<<"CMP BX, 0"<<endl;
+		cseg<<"JE @"<<forExitLabel<<endl;
+		cseg<<"JMP @"<<forStmt<<endl;
+		cseg<<"@"<<e3Lab<<":"<<endl;
+	} expression {
+		string forExitLabel = forLabels.top();
+		forLabels.pop();
+		string forStmt = forLabels.top();
+		forLabels.pop();
+		string e3Lab = forLabels.top();
+		forLabels.pop();
+		string e2Lab = forLabels.top();
+		forLabels.push(e3Lab);
+		forLabels.push(forStmt);
+		forLabels.push(forExitLabel);
+
+		cseg<<"JMP @"<<e2Lab<<endl;
+		cseg<<"@"<<forStmt<<":"<<endl;
+	} RPAREN statement {
 		print("statement : FOR LPAREN expression_statement expression_statement expression RPAREN statement");
-		string s = "for(" + *($3->first) + *($4->first)  + *($5->first) + ")" + *($7->first) ; 
-		$$ = createPSS(s, *($7->second));
+		string s = "for(" + *($4->first) + *($6->first)  + *($8->first) + ")" + *($11->first) ; 
+		$$ = createPSS(s, *($11->second));
 		log((*($$->first)).c_str());
-		deleteMe($3);
+
+
+		string forExitLabel = forLabels.top();
+		forLabels.pop();
+		string forStmt = forLabels.top();
+		forLabels.pop();
+		string e3Lab = forLabels.top();
+		forLabels.pop();
+		string e2Lab = forLabels.top();
+		forLabels.pop();
+
+		cseg<<"JMP @"<<e3Lab<<endl;
+		cseg<<"@"<<forExitLabel<<":"<<endl;
 		deleteMe($4);
-		deleteMe($5);
-		deleteMe($7);
+		deleteMe($6);
+		deleteMe($8);
+		deleteMe($11);
 	}
 	| IF LPAREN expression ifExtraGrammar RPAREN statement %prec LOWER_THAN_ELSE {
 		print("statement : IF LPAREN expression RPAREN statement");
@@ -943,9 +1006,10 @@ statement : var_declaration {
 			string elseLabel = ifLabels.top();
 			ifLabels.pop();
 			string exitLabel = ifLabels.top();
-			// ifLabels.pop();
-			cseg<<"JMP @"<<exitLabel<<endl;
-			cseg<<"@"<<elseLabel<<":"<<endl;
+			ifLabels.pop();
+			ifLabels.push(elseLabel);
+			cseg<<"JMP @"<<elseLabel<<endl;
+			cseg<<"@"<<exitLabel<<":"<<endl;
 
 		}statement {
 		print("statement : IF LPAREN expression RPAREN statement ELSE statement");
@@ -1316,7 +1380,7 @@ ifExtraGrammar: %empty {
 		ifLabels.push(elseLabel);
 		cseg<<"POP BX"<<endl;
 		cseg<<"CMP BX, 0"<<endl;
-		cseg<<"JE @"<<elseLabel<<endl;
+		cseg<<"JE @"<<exitLabel<<endl;
 	};
 
 %%
