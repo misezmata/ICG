@@ -68,8 +68,9 @@ void addParamsToScopeTable(){
 		si->setVarType(paramList[i].second);
 		si->setSpec(1);
 		si->setSize(0);
+		si->setIsParam(i+1, sz);
 		if(table->insert(si)){
-			si->setOffset(funcOffset++);
+			// si->setOffset(funcOffset++);
 		}else{
 			// errorr(("Multiple declaration of "+si->getName()+" in parameter").c_str());
 		}
@@ -80,6 +81,7 @@ void addParamsToScopeTable(){
 vector<SymbolInfo*>* addParameter(vector<SymbolInfo*>* prev, SymbolInfo* id, string specifier, bool flag = true){
 	id->setSpec(1);
 	// id->setSize(stoi(size));
+	// id->setIsParam(prev->size() + 1);
 	id->setVarType(specifier);
 	int sz = prev->size();
 	for(int i=0; i<sz; i++){
@@ -335,6 +337,14 @@ string checkAndValidateID(string idName, string exp, string expType){
 		errorr("NOT A VARIABLE!");
 		return found->getVarType();
 	}
+	if(found->getParam()){
+
+		cseg<<"MOV BX, [BP + "<<(4+(found->getParamSize()-found->getParam())*2)<<"]"<<endl;
+		cseg<<"PUSH BX"<<endl;
+
+
+		return found->getVarType();
+	}
 	if(found->getSize() == 0){
 		if(expType == "NOT_ARRAY") {
 			cout<<"NOT ARRAY"<<endl;
@@ -357,8 +367,18 @@ string checkAndValidateID(string idName, string exp, string expType){
 	}
 	if(expType == "int") {
 		cout<<"int"<<endl;
-		cseg<<"MOV BX, [BP - "<<(10+found->getOffset()*2)<<"] ; loaded "<<found->getName()<<endl;
-		cseg<<"PUSH BX ;stored in stack"<<endl;
+		cseg<<"POP BX; index loaded"<<endl;
+		cseg<<"SHL BX, 1; index *= 2"<<endl;
+		if(scope != "1"){
+			cseg<<"NEG BX   ; index = -index"<<endl;
+			cseg<<"ADD BX, -"<<(found->getOffset()*2+10)<<endl;
+			cseg<<"ADD BX, BP"<<endl;
+			cseg<<"PUSH [BX]"<<endl;
+		}else {
+			cseg<<"PUSH "<<found->getName()<<"[BX]"<<endl;
+		}
+		isLastIdArray = true;
+		cseg<<"PUSH BX"<<endl;
 		return found->getVarType();
 	}
 	int index;
@@ -482,7 +502,7 @@ void deleteMe(SymbolInfo* si){
 }
 
 void initProc(string functionName){
-	funcOffset = 0;
+	// funcOffset = 0;
 	cseg<<functionName<<" PROC"<<endl<<endl;
 	if(functionName == "main") {
 		cseg<<"MOV AX, @DATA"<<endl;
@@ -501,7 +521,7 @@ void initProc(string functionName){
 }
 
 string functionReturnLabel;
-void terminateProc(string functionName){
+void terminateProc(string functionName, int retValue=0){
 	if(functionName == "main") {
 		cseg<<endl;
 		cseg<<"@"<<functionReturnLabel<<":"<<endl;
@@ -519,6 +539,7 @@ void terminateProc(string functionName){
 	cseg<<"POP BX"<<endl;
 	cseg<<"POP AX"<<endl;
 	cseg<<"POP BP"<<endl<<endl;
+	cseg<<"RET "<<retValue<<endl<<endl;
 	cseg<<functionName<<" ENDP"<<endl<<endl;
 }
 
@@ -695,6 +716,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 			initProc(($2->getName()));
 			insertFunctionIdToSymbolTable($2, *$1, true, $4);
 			functionReturnLabel = getnextLabel();
+			funcOffset = 0;
 		} compound_statement {
 		print("func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement");
 		// insertFunctionIdToSymbolTable($2, *$1, true, $4);
@@ -705,7 +727,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 		warning(s.c_str());
 		log((*($$->first) ).c_str());
 		deleteMe($1);
-		terminateProc(($2->getName()));
+		terminateProc(($2->getName()), $4->size()*2);
 	}
 	|  type_specifier ID LPAREN error RPAREN {
 			// initProc(($2->getName()));
@@ -726,6 +748,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN {
 			initProc(($2->getName()));
 			insertFunctionIdToSymbolTable($2, *$1, true, new vector<SymbolInfo*>);
 			functionReturnLabel = getnextLabel();
+			funcOffset = 0;
 		} compound_statement {
 		// errorr("eikhane ekhane!");
 		print("func_definition : type_specifier ID LPAREN RPAREN compound_statement");
@@ -1070,7 +1093,11 @@ statement : var_declaration {
 		}
 		$$ = createPSS("printf("+$3->getName()+");\n", "null");
 		log((*($$->first)).c_str());
-		cseg<<"MOV BX, [BP - "<<(si->getOffset()*2+10)<<"]"<<endl;
+		if(!si->getParam()){
+			cseg<<"MOV BX, [BP - "<<(si->getOffset()*2+10)<<"]"<<endl;
+		}else {
+			cseg<<"MOV BX, [BP + "<<(4+(si->getParamSize()-si->getParam())*2)<<"]"<<endl;
+		}
 		cseg<<"PUSH BX"<<endl;
 		cseg<<"CALL PRINT_DECIMAL_INTEGER"<<endl;
 		deleteMe($3);
@@ -1330,6 +1357,9 @@ factor	: variable {
 		validateAndCreateFactor($1, *$3);
 		$$ = createPSS ($1->getName() + "(" + getStringFromArgumentList(*$3) + ")", getIdVarType($1->getName()));
 		log((*($$->first)).c_str());
+		cseg<<"CALL "<<$1->getName()<<endl;
+		cseg<<"MOV BX, DX"<<endl;
+		cseg<<"PUSH BX"<<endl;
 		deleteMe($1);
 		deleteMe($3); 
 
@@ -1384,9 +1414,11 @@ argument_list : arguments {
 	}
 ;
 
-arguments : arguments COMMA logic_expression {
+arguments : arguments {
+		// cseg<<"; ";
+	} COMMA logic_expression {
 		print("arguments : arguments COMMA logic_expression");
-		$$ = addLogicalExpression($1, $3);
+		$$ = addLogicalExpression($1, $4);
 		log(getStringFromArguments(*$$).c_str());
 	}
 	| logic_expression {

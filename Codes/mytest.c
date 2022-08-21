@@ -1,8 +1,13 @@
+int fib(int a){
+    if(a == 1 || a == 2) return 1;
+    return fib(a-1) + fib(a-2);
+}
+
 int main(){
-    int a, b, c;
-    a = 5;
-    b = 4; 
-    while(a--){
-        
+    int a;
+    for(a = 1; a < 10; a++){
+        int c;
+        c = fib(a);
+        printf(c);
     }
 }

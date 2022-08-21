@@ -7,6 +7,8 @@ class SymbolInfo{
     vector<SymbolInfo*>* params;
     int offset = 0;
     string scope;
+    int paramValue = 0;
+    int paramSize = 0;
 public:
     SymbolInfo* next;
     SymbolInfo(string name, string type){
@@ -66,4 +68,7 @@ public:
     int getOffset(){return offset;}
     void setScope(string s){scope = s;}
     string getScope(){return scope;}
+    void setIsParam(int p, int sz){paramValue = p; paramSize = sz;}
+    int getParam(){return paramValue;}
+    int getParamSize(){return paramSize;}
 };
